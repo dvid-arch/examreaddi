@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>ExamRedi AI Study Platform</title>
+    <script src="https://cdn.tailwindcss.com?plugins=typography"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css" integrity="sha384-n8MVd4RsNIU0tAv4ct0nTaAbDJwPJzDEaqSD1odI+WdtXRGWt2kTvGFasHpSy3SV" crossorigin="anonymous">
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            colors: {
+              primary: {
+                DEFAULT: '#1E8449', // Darker, more vibrant green for better contrast
+                light: '#E8F5E9',   // Light Green for backgrounds/hovers
+              },
+              secondary: {
+                DEFAULT: '#1565C0', // Deeper blue for better contrast
+                light: '#E3F2FD',
+              },
+              accent: '#239B56', // A brighter accent green
+              'tile-blue': '#E3F2FD',
+              'tile-pink': '#FCE4EC',
+              'tile-green': '#E8F5E9',
+              'tile-purple': '#F3E5F5',
+              'tile-orange': '#FFF3E0',
+              'tile-yellow': '#FFFDE7',
+            }
+          }
+        }
+      }
+    </script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <script type="importmap">
+{
+  "imports": {
+    "@google/genai": "https://aistudiocdn.com/@google/genai@^1.28.0",
+    "react-dom/": "https://aistudiocdn.com/react-dom@^19.2.0/",
+    "react/": "https://aistudiocdn.com/react@^19.2.0/",
+    "react": "https://aistudiocdn.com/react@^19.2.0",
+    "react-router-dom": "https://aistudiocdn.com/react-router-dom@^7.9.5",
+    "react-markdown": "https://esm.sh/react-markdown@9?deps=react@19.2.0",
+    "remark-gfm": "https://esm.sh/remark-gfm@4",
+    "remark-math": "https://esm.sh/remark-math@6",
+    "rehype-katex": "https://esm.sh/rehype-katex@7",
+    "rehype-raw": "https://esm.sh/rehype-raw@7"
+  }
+}
+</script>
+</head>
+  <body class="bg-slate-100">
+    <div id="root"></div>
+    <script type="text/babel" data-presets="typescript,react" data-type="module" src="/index.tsx"></script>
+  </body>
+</html>
