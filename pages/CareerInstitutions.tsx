@@ -1,9 +1,9 @@
-
 import React, { useState } from 'react';
 import Card from '../components/Card.tsx';
-import { researchTopic } from '../services/geminiService.ts';
+import { researchTopic } from '../services/aiService.ts';
 import { CareerIcon } from '../constants.tsx';
 import MarkdownRenderer from '../components/MarkdownRenderer.tsx';
+import { useAuth } from '../contexts/AuthContext.tsx';
 
 const Spinner = () => (
     <div className="flex justify-center items-center py-10">
@@ -12,6 +12,7 @@ const Spinner = () => (
 );
 
 const CareerInstitutions: React.FC = () => {
+    const { isAuthenticated, user, requestLogin, requestUpgrade, useAiCredit } = useAuth();
     const [searchType, setSearchType] = useState<'university' | 'course'>('university');
     const [query, setQuery] = useState('');
     const [result, setResult] = useState('');
@@ -21,6 +22,39 @@ const CareerInstitutions: React.FC = () => {
 
     const handleSearch = async (e: React.FormEvent) => {
         e.preventDefault();
+
+        if (!isAuthenticated || !user) {
+            requestLogin();
+            return;
+        }
+
+        if (user.subscription === 'free') {
+            requestUpgrade({
+                title: "Unlock Career & Institution Research",
+                message: "Get detailed insights into universities and career paths with ExamRedi Pro.",
+                featureList: [
+                    "Research any Nigerian university",
+                    "Explore detailed course information",
+                    "Costs 1 AI Credit per search",
+                    "Make informed decisions about your future"
+                ]
+            });
+            return;
+        }
+        
+        if (user.aiCredits <= 0) {
+             requestUpgrade({
+                title: "You're out of AI Credits",
+                message: "You've used all your AI Credits for this month. Your credits will reset on your next billing cycle.",
+                featureList: [
+                    "AI Credits are used for premium generation tasks",
+                    "Pro users get 10 credits each month",
+                    "Upgrade to generate more content",
+                ]
+            });
+            return;
+        }
+
         if (!query.trim()) {
             setError('Please enter a search term.');
             return;
@@ -34,6 +68,7 @@ const CareerInstitutions: React.FC = () => {
         try {
             const response = await researchTopic(searchType, query);
             setResult(response);
+            await useAiCredit(); // Deduct one credit and refetch user
         } catch (err) {
             setError(err instanceof Error ? err.message : 'An unknown error occurred.');
         } finally {
@@ -46,9 +81,9 @@ const CareerInstitutions: React.FC = () => {
         : "e.g., Computer Science";
     
     return (
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-start">
             {/* Left Column: Search Controls */}
-            <div className="lg:col-span-1 lg:sticky top-24">
+            <div className="md:col-span-1 md:sticky top-24">
                 <Card>
                     <div className="p-2">
                         <h1 className="text-2xl font-bold text-slate-800 mb-4">Research Center</h1>
@@ -80,6 +115,9 @@ const CareerInstitutions: React.FC = () => {
                                     className="w-full bg-gray-100 border-gray-200 border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary"
                                     required
                                 />
+                                {user?.subscription === 'pro' && (
+                                    <p className="text-xs text-center text-yellow-700 mt-2">Costs 1 AI Credit</p>
+                                )}
                             </div>
                             <button
                                 type="submit"
@@ -94,7 +132,7 @@ const CareerInstitutions: React.FC = () => {
             </div>
 
             {/* Right Column: Results */}
-            <div className="lg:col-span-2">
+            <div className="md:col-span-2">
                 <Card>
                     <div className="p-4 min-h-[60vh]">
                         {!hasSearched ? (

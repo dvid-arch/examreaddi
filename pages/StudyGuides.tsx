@@ -1,10 +1,11 @@
-
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Card from '../components/Card.tsx';
-import { generateStudyGuide } from '../services/geminiService.ts';
-import { allStudyGuides } from '../data/studyGuides.ts';
+import { generateStudyGuide } from '../services/aiService.ts';
 import { StudyGuide } from '../types.ts';
 import MarkdownRenderer from '../components/MarkdownRenderer.tsx';
+import { useAuth } from '../contexts/AuthContext.tsx';
+import { API_BASE_URL } from '../config.ts';
+
 
 // Loading spinner component
 const Spinner = () => (
@@ -58,17 +59,17 @@ const AccordionItem: React.FC<{
     const subjectId = subject.replace(/\s+/g, '-');
 
     return (
-        <div className="border border-gray-200 rounded-lg overflow-hidden transition-shadow duration-300 hover:shadow-md">
+        <div className="border border-gray-200 dark:border-slate-700 rounded-lg overflow-hidden transition-shadow duration-300 hover:shadow-md">
             <button
                 onClick={() => setIsOpen(!isOpen)}
-                className="w-full flex justify-between items-center p-3 bg-gray-50 hover:bg-gray-100 focus:outline-none"
+                className="w-full flex justify-between items-center p-3 bg-gray-50 dark:bg-gray-800/50 hover:bg-gray-100 dark:hover:bg-gray-800 focus:outline-none"
                 aria-expanded={isOpen}
                 aria-controls={`accordion-content-${subjectId}`}
             >
-                <h3 className="font-bold text-lg text-slate-800">{subject}</h3>
+                <h3 className="font-bold text-lg text-slate-800 dark:text-slate-200">{subject}</h3>
                 <svg
                     xmlns="http://www.w3.org/2000/svg"
-                    className={`h-6 w-6 text-slate-600 transform transition-transform duration-300 ${isOpen ? 'rotate-180' : ''}`}
+                    className={`h-6 w-6 text-slate-600 dark:text-slate-400 transform transition-transform duration-300 ${isOpen ? 'rotate-180' : ''}`}
                     fill="none" viewBox="0 0 24 24" stroke="currentColor"
                 >
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
@@ -78,13 +79,13 @@ const AccordionItem: React.FC<{
                 id={`accordion-content-${subjectId}`}
                 className={`transition-all duration-500 ease-in-out overflow-hidden ${isOpen ? 'max-h-96' : 'max-h-0'}`}
             >
-                <div className="p-3 border-t border-gray-200 bg-white">
+                <div className="p-3 border-t border-gray-200 dark:border-slate-700 bg-white dark:bg-gray-800/20">
                     <ul className="space-y-2">
                         {guides.map(guide => (
                             <li key={guide.id}>
                                 <button
                                     onClick={() => onGuideClick(guide)}
-                                    className="w-full text-left p-3 rounded text-slate-700 hover:bg-primary-light hover:text-primary transition-colors duration-200 flex items-center gap-3"
+                                    className="w-full text-left p-3 rounded text-slate-700 dark:text-slate-300 hover:bg-primary-light hover:text-primary dark:hover:bg-primary/20 transition-colors duration-200 flex items-center gap-3"
                                 >
                                     <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
                                     <span>{guide.title}</span>
@@ -99,6 +100,9 @@ const AccordionItem: React.FC<{
 };
 
 const StudyGuides: React.FC = () => {
+    const { isAuthenticated, user, requestLogin, requestUpgrade, useAiCredit } = useAuth();
+    const [allStudyGuides, setAllStudyGuides] = useState<StudyGuide[]>([]);
+    const [isGuidesLoading, setIsGuidesLoading] = useState(true);
     const [subject, setSubject] = useState('');
     const [topic, setTopic] = useState('');
     const [generatedGuide, setGeneratedGuide] = useState('');
@@ -107,8 +111,56 @@ const StudyGuides: React.FC = () => {
     const [hasGenerated, setHasGenerated] = useState(false);
     const [viewingGuide, setViewingGuide] = useState<StudyGuide | null>(null);
 
+    useEffect(() => {
+        const fetchGuides = async () => {
+            try {
+                const response = await fetch(`${API_BASE_URL}/data/guides`);
+                const data: StudyGuide[] = await response.json();
+                setAllStudyGuides(data);
+            } catch (error) {
+                console.error("Failed to fetch study guides", error);
+            } finally {
+                setIsGuidesLoading(false);
+            }
+        };
+        fetchGuides();
+    }, []);
+
     const handleGenerate = async (e: React.FormEvent) => {
         e.preventDefault();
+        
+        if (!isAuthenticated || !user) {
+            requestLogin();
+            return;
+        }
+
+        if (user.subscription === 'free') {
+            requestUpgrade({
+                title: "Unlock AI Guide Generator",
+                message: "Create personalized study guides on any topic instantly with ExamRedi Pro.",
+                featureList: [
+                    "Generate unlimited custom study guides",
+                    "Costs 1 AI Credit per guide",
+                    "Perfect for difficult topics",
+                    "Save time on note-taking"
+                ]
+            });
+            return;
+        }
+        
+        if (user.aiCredits <= 0) {
+             requestUpgrade({
+                title: "You're out of AI Credits",
+                message: "You've used all your AI Credits for this month. Your credits will reset on your next billing cycle.",
+                featureList: [
+                    "AI Credits are used for premium generation tasks",
+                    "Pro users get 10 credits each month",
+                    "Upgrade to generate more content",
+                ]
+            });
+            return;
+        }
+
         if (!subject.trim() || !topic.trim()) {
             setError('Please provide both a subject and a topic.');
             return;
@@ -122,6 +174,7 @@ const StudyGuides: React.FC = () => {
         try {
             const guideContent = await generateStudyGuide(subject, topic);
             setGeneratedGuide(guideContent);
+            await useAiCredit(); // Deduct one credit and refetch user
         } catch (err) {
             const errorMessage = err instanceof Error ? err.message : 'An unknown error occurred.';
             setError(errorMessage);
@@ -143,53 +196,58 @@ const StudyGuides: React.FC = () => {
         <div className="space-y-6">
             <Card>
                 <div className="p-2">
-                    <h2 className="text-2xl font-bold text-slate-800 mb-1">All Study Guides</h2>
-                    <p className="text-slate-600 mb-4">Explore a collection of guides, organized by subject.</p>
-                    <div className="space-y-4">
-                        {Object.entries(guidesBySubject).sort(([subjectA], [subjectB]) => subjectA.localeCompare(subjectB)).map(([subject, guides]) => (
-                            <AccordionItem
-                                key={subject}
-                                subject={subject}
-                                guides={guides}
-                                onGuideClick={setViewingGuide}
-                            />
-                        ))}
-                    </div>
+                    <h2 className="text-2xl font-bold text-slate-800 dark:text-white mb-1">All Study Guides</h2>
+                    <p className="text-slate-600 dark:text-slate-400 mb-4">Explore a collection of guides, organized by subject.</p>
+                    {isGuidesLoading ? <p>Loading guides...</p> : (
+                        <div className="space-y-4">
+                            {Object.entries(guidesBySubject).sort(([subjectA], [subjectB]) => subjectA.localeCompare(subjectB)).map(([subject, guides]) => (
+                                <AccordionItem
+                                    key={subject}
+                                    subject={subject}
+                                    guides={guides}
+                                    onGuideClick={setViewingGuide}
+                                />
+                            ))}
+                        </div>
+                    )}
                 </div>
             </Card>
 
             <Card>
                 <form onSubmit={handleGenerate} className="space-y-6 p-2">
                     <div className="text-center">
-                         <div className="inline-block p-3 bg-primary-light rounded-full mb-3">
+                         <div className="inline-block p-3 bg-primary-light dark:bg-primary/20 rounded-full mb-3">
                             <GuideIcon />
                         </div>
-                        <h1 className="text-3xl font-bold text-slate-800">AI Guide Generator</h1>
-                        <p className="text-slate-600 mt-2">Can't find what you need? Create a custom study guide on any topic.</p>
+                        <h1 className="text-3xl font-bold text-slate-800 dark:text-white">AI Guide Generator</h1>
+                        <p className="text-slate-600 dark:text-slate-400 mt-2">Can't find what you need? Create a custom study guide on any topic.</p>
+                         {user?.subscription === 'pro' && (
+                            <p className="text-sm font-semibold text-yellow-700 dark:text-yellow-300 bg-yellow-100 dark:bg-yellow-500/20 px-3 py-1 rounded-full inline-block mt-2">Costs 1 AI Credit</p>
+                        )}
                     </div>
                     
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                          <div>
-                            <label htmlFor="subject" className="block text-sm font-medium text-slate-700 mb-1">Subject</label>
+                            <label htmlFor="subject" className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Subject</label>
                             <input
                                 id="subject"
                                 type="text"
                                 value={subject}
                                 onChange={(e) => setSubject(e.target.value)}
                                 placeholder="e.g., Biology"
-                                className="w-full bg-gray-100 border-gray-200 border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary"
+                                className="w-full bg-gray-100 dark:bg-slate-700 border-gray-200 dark:border-slate-600 border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary"
                                 required
                             />
                         </div>
                         <div>
-                            <label htmlFor="topic" className="block text-sm font-medium text-slate-700 mb-1">Topic</label>
+                            <label htmlFor="topic" className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Topic</label>
                             <input
                                 id="topic"
                                 type="text"
                                 value={topic}
                                 onChange={(e) => setTopic(e.target.value)}
                                 placeholder="e.g., Photosynthesis"
-                                className="w-full bg-gray-100 border-gray-200 border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary"
+                                className="w-full bg-gray-100 dark:bg-slate-700 border-gray-200 dark:border-slate-600 border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary"
                                 required
                             />
                         </div>
@@ -214,7 +272,7 @@ const StudyGuides: React.FC = () => {
                         {error && <p className="text-red-500 text-center">{error}</p>}
                         {generatedGuide && (
                             <div>
-                                <h2 className="text-2xl font-bold text-slate-800 border-b pb-3 mb-4 capitalize">{topic}</h2>
+                                <h2 className="text-2xl font-bold text-slate-800 dark:text-white border-b dark:border-slate-700 pb-3 mb-4 capitalize">{topic}</h2>
                                 <MarkdownRenderer content={generatedGuide} />
                             </div>
                         )}

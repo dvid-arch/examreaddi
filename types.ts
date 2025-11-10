@@ -74,6 +74,7 @@ export interface MemoryCardType {
   content: string;
   isFlipped: boolean;
   isMatched: boolean;
+  justMatched?: boolean;
 }
 
 export interface LeaderboardScore {
@@ -85,4 +86,12 @@ export interface LeaderboardScore {
 
 export interface ChallengeQuestion extends PastQuestion {
   subject: string;
+}
+
+export interface User {
+  name: string;
+  subscription: 'free' | 'pro';
+  aiCredits: number;
+  dailyMessageCount: number;
+  lastMessageDate: string; // YYYY-MM-DD format
 }

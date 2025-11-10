@@ -1,0 +1,21 @@
+[
+  {
+    "id": "1",
+    "name": "Free User",
+    "email": "free@examredi.com",
+    "passwordHash": "$2a$10$f/C1Qz.E.a/aO0V5V8d.R.Z5z.1h.m3k4j5l6o7p8q9r0s1t2u3v",
+    "subscription": "free",
+    "aiCredits": 0,
+    "dailyMessageCount": 0,
+    "lastMessageDate": "2024-01-01"
+  },
+  {
+    "id": "2",
+    "name": "Pro User",
+    "email": "pro@examredi.com",
+    "passwordHash": "$2a$10$f/C1Qz.E.a/aO0V5V8d.R.Z5z.1h.m3k4j5l6o7p8q9r0s1t2u3v",
+    "subscription": "pro",
+    "aiCredits": 10,
+    "dailyMessageCount": 0,
+    "lastMessageDate": "2024-01-01"
+  }

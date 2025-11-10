@@ -1,9 +1,10 @@
 
 import React, { useState, useRef, useEffect } from 'react';
-import { sendMessageToAI } from '../services/geminiService.ts';
+import { sendMessageToAI } from '../services/aiService.ts';
 import { ChatMessage } from '../types.ts';
 import Card from '../components/Card.tsx';
 import MarkdownRenderer from '../components/MarkdownRenderer.tsx';
+import { useAuth } from '../contexts/AuthContext.tsx';
 
 // --- ICONS ---
 const ChatIcon = () => (
@@ -30,6 +31,45 @@ const AiIcon = () => (
     </div>
 );
 
+// --- ACTION BUTTONS COMPONENT ---
+const AiActions: React.FC<{ onAction: (prompt: string) => void }> = ({ onAction }) => {
+    const [showExplainMenu, setShowExplainMenu] = useState(false);
+
+    const handleExplainClick = (style: string) => {
+        onAction(`Can you explain your last response ${style}?`);
+        setShowExplainMenu(false);
+    };
+
+    const actionButtonClasses = "text-xs font-semibold text-primary hover:underline px-2 py-1 rounded";
+    const explainOptionClasses = "block w-full text-left px-3 py-2 text-sm text-slate-700 dark:text-slate-200 hover:bg-primary-light dark:hover:bg-primary/20";
+
+    return (
+        <div className="flex items-center gap-2 mt-2 relative">
+            <button onClick={() => onAction("Can you give me a hint?")} className={actionButtonClasses}>
+                Need a hint?
+            </button>
+            <div className="relative">
+                <button onClick={() => setShowExplainMenu(prev => !prev)} className={actionButtonClasses}>
+                    Explain differently
+                </button>
+                {showExplainMenu && (
+                    <div className="absolute bottom-full mb-1 w-40 bg-white dark:bg-slate-700 shadow-lg rounded-lg border dark:border-slate-600 z-10 py-1">
+                        <button onClick={() => handleExplainClick('in a simpler way')} className={explainOptionClasses}>
+                            Simpler
+                        </button>
+                        <button onClick={() => handleExplainClick('in more detail')} className={explainOptionClasses}>
+                            More Detailed
+                        </button>
+                        <button onClick={() => handleExplainClick('with an analogy')} className={explainOptionClasses}>
+                            With an analogy
+                        </button>
+                    </div>
+                )}
+            </div>
+        </div>
+    );
+};
+
 const formatTimestamp = (timestamp: number) => {
     return new Date(timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 };
@@ -54,9 +94,16 @@ const ExamWithAI: React.FC = () => {
     const [subject, setSubject] = useState('');
     const [topic, setTopic] = useState('');
     const [showPrompts, setShowPrompts] = useState(false);
+    const { isAuthenticated, requestLogin, incrementMessageCount, requestUpgrade, user } = useAuth();
 
     // Load chat history from localStorage on initial render
     useEffect(() => {
+        if (!isAuthenticated) {
+            setMessages([]);
+            localStorage.removeItem(CHAT_HISTORY_KEY);
+            setMode('selection');
+            return;
+        }
         const savedMessages = localStorage.getItem(CHAT_HISTORY_KEY);
         if (savedMessages) {
             try {
@@ -71,7 +118,7 @@ const ExamWithAI: React.FC = () => {
                 localStorage.removeItem(CHAT_HISTORY_KEY);
             }
         }
-    }, []);
+    }, [isAuthenticated]);
 
     // Scroll to the bottom of the chat on new messages
     useEffect(() => {
@@ -82,15 +129,19 @@ const ExamWithAI: React.FC = () => {
 
     // Save chat history to localStorage whenever it changes
     useEffect(() => {
-        if (messages.length > 0) {
+        if (isAuthenticated && messages.length > 0) {
             localStorage.setItem(CHAT_HISTORY_KEY, JSON.stringify(messages));
-        } else {
+        } else if (!isAuthenticated || messages.length === 0) {
             localStorage.removeItem(CHAT_HISTORY_KEY);
         }
-    }, [messages]);
+    }, [messages, isAuthenticated]);
 
 
     const handleStartChat = () => {
+        if (!isAuthenticated) {
+            requestLogin();
+            return;
+        }
         setMessages([
             { role: 'model', text: 'Hello! I am your AI-buddy. How can I help you prepare for your exams today?', timestamp: Date.now() }
         ]);
@@ -100,6 +151,10 @@ const ExamWithAI: React.FC = () => {
 
     const handleStartPracticeSession = async (e: React.FormEvent) => {
         e.preventDefault();
+        if (!isAuthenticated) {
+            requestLogin();
+            return;
+        }
         if (!subject.trim() || !topic.trim()) {
             alert('Please provide both a subject and a topic.');
             return;
@@ -122,6 +177,12 @@ const ExamWithAI: React.FC = () => {
 
     const sendUserMessageToAI = async (messageText: string) => {
         if (!messageText.trim() || isLoading) return;
+        
+        if (!isAuthenticated) {
+            requestLogin();
+            return;
+        }
+
         setShowPrompts(false);
         const newMessages: ChatMessage[] = [...messages, { role: 'user', text: messageText, timestamp: Date.now() }];
         setMessages(newMessages);
@@ -130,10 +191,21 @@ const ExamWithAI: React.FC = () => {
 
         try {
             const aiResponse = await sendMessageToAI(messageText, messages);
-            setMessages([...newMessages, { role: 'model', text: aiResponse, timestamp: Date.now() }]);
+            if (aiResponse.includes("daily message limit")) {
+                requestUpgrade({
+                    title: "You're out of messages!",
+                    message: "You've used your 5 free AI Tutor messages for today. Upgrade to Pro for unlimited access.",
+                    featureList: ["Unlimited AI Tutor chats", "Ask anything, anytime, 24/7", "Personalized hints and explanations", "Step-by-step problem solving"]
+                });
+                setMessages(messages); // Revert messages
+            } else {
+                 setMessages([...newMessages, { role: 'model', text: aiResponse, timestamp: Date.now() }]);
+                 await incrementMessageCount();
+            }
         } catch (error) {
             console.error(error);
-            setMessages([...newMessages, { role: 'model', text: 'Sorry, I encountered an error. Please try again.', timestamp: Date.now() }]);
+            const errorMessage = (error as Error).message || 'Sorry, I encountered an error. Please try again.';
+            setMessages([...newMessages, { role: 'model', text: errorMessage, timestamp: Date.now() }]);
         } finally {
             setIsLoading(false);
             if (textareaRef.current) {
@@ -144,7 +216,7 @@ const ExamWithAI: React.FC = () => {
     
     const handleSendMessage = async (e: React.FormEvent) => {
         e.preventDefault();
-        sendUserMessageToAI(userInput);
+        await sendUserMessageToAI(userInput);
     };
     
     const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
@@ -165,6 +237,10 @@ const ExamWithAI: React.FC = () => {
         sendUserMessageToAI(prompt);
     };
 
+    const handleAiAction = (prompt: string) => {
+        sendUserMessageToAI(prompt);
+    };
+
     const handleNewSession = () => {
         setMessages([]);
         setUserInput('');
@@ -179,18 +255,18 @@ const ExamWithAI: React.FC = () => {
         return (
             <Card>
                 <div className="text-center p-4">
-                    <h1 className="text-2xl font-bold text-slate-800">Exam With AI-buddy</h1>
-                    <p className="text-slate-600 mt-2 mb-8">Choose how you'd like to prepare for your exam.</p>
+                    <h1 className="text-2xl font-bold text-slate-800 dark:text-white">Exam With AI-buddy</h1>
+                    <p className="text-slate-600 dark:text-slate-400 mt-2 mb-8">Choose how you'd like to prepare for your exam.</p>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <button onClick={handleStartChat} className="p-4 bg-white border border-gray-200 rounded-lg shadow-sm hover:shadow-lg hover:-translate-y-1 transition-all duration-300 flex flex-col items-center justify-center text-center">
+                        <button onClick={handleStartChat} className="p-4 bg-white dark:bg-slate-700/50 border border-gray-200 dark:border-slate-700 rounded-lg shadow-sm hover:shadow-lg hover:-translate-y-1 transition-all duration-300 flex flex-col items-center justify-center text-center">
                             <ChatIcon />
-                            <h2 className="font-bold text-lg text-slate-800">Open Chat</h2>
-                            <p className="text-sm text-slate-600 mt-1">Have a general conversation or ask specific questions.</p>
+                            <h2 className="font-bold text-lg text-slate-800 dark:text-slate-100">Open Chat</h2>
+                            <p className="text-sm text-slate-600 dark:text-slate-400 mt-1">Have a general conversation or ask specific questions.</p>
                         </button>
-                        <button onClick={() => setMode('practice_form')} className="p-4 bg-white border border-gray-200 rounded-lg shadow-sm hover:shadow-lg hover:-translate-y-1 transition-all duration-300 flex flex-col items-center justify-center text-center">
+                        <button onClick={() => setMode('practice_form')} className="p-4 bg-white dark:bg-slate-700/50 border border-gray-200 dark:border-slate-700 rounded-lg shadow-sm hover:shadow-lg hover:-translate-y-1 transition-all duration-300 flex flex-col items-center justify-center text-center">
                             <PracticeIcon />
-                            <h2 className="font-bold text-lg text-slate-800">Practice Mode</h2>
-                            <p className="text-sm text-slate-600 mt-1">Get tailored practice questions on a specific topic.</p>
+                            <h2 className="font-bold text-lg text-slate-800 dark:text-slate-100">Practice Mode</h2>
+                            <p className="text-sm text-slate-600 dark:text-slate-400 mt-1">Get tailored practice questions on a specific topic.</p>
                         </button>
                     </div>
                 </div>
@@ -202,17 +278,17 @@ const ExamWithAI: React.FC = () => {
         return (
             <Card>
                 <form onSubmit={handleStartPracticeSession} className="space-y-6 p-4">
-                    <h2 className="text-2xl font-bold text-slate-800">Setup Practice Session</h2>
+                    <h2 className="text-2xl font-bold text-slate-800 dark:text-white">Setup Practice Session</h2>
                     <div>
-                        <label htmlFor="subject" className="block text-sm font-medium text-slate-700 mb-1">Subject</label>
-                        <input id="subject" type="text" value={subject} onChange={(e) => setSubject(e.target.value)} placeholder="e.g., Physics" className="w-full bg-gray-100 border-gray-200 border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary" required />
+                        <label htmlFor="subject" className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Subject</label>
+                        <input id="subject" type="text" value={subject} onChange={(e) => setSubject(e.target.value)} placeholder="e.g., Physics" className="w-full bg-gray-100 dark:bg-slate-700 border-gray-200 dark:border-slate-600 border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary" required />
                     </div>
                     <div>
-                        <label htmlFor="topic" className="block text-sm font-medium text-slate-700 mb-1">Topic</label>
-                        <input id="topic" type="text" value={topic} onChange={(e) => setTopic(e.target.value)} placeholder="e.g., Newtonian Mechanics" className="w-full bg-gray-100 border-gray-200 border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary" required />
+                        <label htmlFor="topic" className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Topic</label>
+                        <input id="topic" type="text" value={topic} onChange={(e) => setTopic(e.target.value)} placeholder="e.g., Newtonian Mechanics" className="w-full bg-gray-100 dark:bg-slate-700 border-gray-200 dark:border-slate-600 border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary" required />
                     </div>
                     <div className="flex items-center justify-end gap-4 pt-2">
-                        <button type="button" onClick={() => setMode('selection')} className="font-semibold text-slate-600 px-6 py-2 rounded-lg hover:bg-gray-100 transition">Back</button>
+                        <button type="button" onClick={() => setMode('selection')} className="font-semibold text-slate-600 dark:text-slate-300 px-6 py-2 rounded-lg hover:bg-gray-100 dark:hover:bg-slate-700 transition">Back</button>
                         <button type="submit" className="bg-primary text-white font-bold py-2 px-6 rounded-lg hover:bg-accent transition">Start Practice</button>
                     </div>
                 </form>
@@ -221,20 +297,20 @@ const ExamWithAI: React.FC = () => {
     }
     
     return (
-        <div className="flex flex-col bg-white rounded-2xl shadow-sm h-full max-h-[calc(100vh-200px)] md:max-h-[calc(100vh-160px)]">
-            <div className="p-4 border-b border-gray-200 flex justify-between items-center flex-shrink-0">
+        <div className="flex flex-col bg-white dark:bg-slate-800 rounded-2xl shadow-sm h-full max-h-[calc(100vh-200px)] md:max-h-[calc(100vh-160px)]">
+            <div className="p-4 border-b border-gray-200 dark:border-slate-700 flex justify-between items-center flex-shrink-0">
                 <div>
-                    <h1 className="text-xl font-bold text-slate-800">Exam With AI-buddy</h1>
-                    <p className="text-sm text-slate-600">Your personal AI tutor for exam preparation.</p>
+                    <h1 className="text-xl font-bold text-slate-800 dark:text-white">Exam With AI-buddy</h1>
+                    <p className="text-sm text-slate-600 dark:text-slate-400">Your personal AI tutor for exam preparation.</p>
                 </div>
-                <button onClick={handleNewSession} className="font-semibold text-primary py-2 px-4 rounded-lg border border-primary hover:bg-primary-light transition-colors duration-200 text-sm">New Session</button>
+                <button onClick={handleNewSession} className="font-semibold text-primary py-2 px-4 rounded-lg border border-primary hover:bg-primary-light dark:hover:bg-primary/20 transition-colors duration-200 text-sm">New Session</button>
             </div>
             <div className="flex-1 p-4 sm:p-6 overflow-y-auto space-y-6">
                 {messages.map((msg, index) => (
                     <div key={index} className={`flex items-start gap-3 ${msg.role === 'user' ? 'justify-end' : ''}`}>
                         {msg.role === 'model' && <AiIcon />}
                         <div className={`flex flex-col ${msg.role === 'user' ? 'items-end' : 'items-start'}`}>
-                           <div className={`max-w-xs sm:max-w-md lg:max-w-2xl p-4 rounded-2xl shadow-sm ${msg.role === 'user' ? 'bg-primary text-white rounded-br-lg' : 'bg-gray-100 text-slate-800 rounded-bl-lg'}`}>
+                           <div className={`max-w-xs sm:max-w-md lg:max-w-2xl p-4 rounded-2xl shadow-sm ${msg.role === 'user' ? 'bg-primary text-white rounded-br-lg' : 'bg-gray-100 dark:bg-slate-700 text-slate-800 dark:text-slate-200 rounded-bl-lg'}`}>
                                 {msg.role === 'model' ? (
                                     <MarkdownRenderer content={msg.text} />
                                 ) : (
@@ -242,6 +318,9 @@ const ExamWithAI: React.FC = () => {
                                 )}
                            </div>
                            <span className="text-xs text-gray-400 mt-1.5 px-1">{formatTimestamp(msg.timestamp)}</span>
+                           {msg.role === 'model' && index === messages.length - 1 && !isLoading && (
+                                <AiActions onAction={handleAiAction} />
+                            )}
                         </div>
                          {msg.role === 'user' && <UserIcon />}
                     </div>
@@ -249,7 +328,7 @@ const ExamWithAI: React.FC = () => {
                 {isLoading && (
                      <div className="flex items-start gap-3">
                         <AiIcon />
-                        <div className="p-4 rounded-2xl rounded-bl-lg bg-gray-100 text-slate-800">
+                        <div className="p-4 rounded-2xl rounded-bl-lg bg-gray-100 dark:bg-slate-700 text-slate-800 dark:text-slate-200">
                            <div className="flex items-center space-x-2">
                                 <span className="h-2 w-2 bg-slate-400 rounded-full animate-bounce [animation-delay:-0.3s]"></span>
                                 <span className="h-2 w-2 bg-slate-400 rounded-full animate-bounce [animation-delay:-0.15s]"></span>
@@ -260,16 +339,16 @@ const ExamWithAI: React.FC = () => {
                 )}
                 <div ref={chatEndRef} />
             </div>
-            <div className="p-3 border-t border-gray-200 bg-white mt-auto flex-shrink-0">
+            <div className="p-3 border-t border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-800 mt-auto flex-shrink-0">
                  {showPrompts && !isLoading && messages.length <= 1 && (
                     <div className="pb-3">
-                        <p className="text-xs font-semibold text-slate-500 mb-2 px-1">Try one of these prompts:</p>
+                        <p className="text-xs font-semibold text-slate-500 dark:text-slate-400 mb-2 px-1">Try one of these prompts:</p>
                         <div className="flex items-center gap-2 overflow-x-auto pb-2">
                             {suggestivePrompts.map((prompt, index) => (
                                 <button
                                     key={index}
                                     onClick={() => handlePromptClick(prompt)}
-                                    className="bg-gray-100 text-slate-700 text-sm font-medium px-3 py-1.5 rounded-lg hover:bg-gray-200 transition-colors whitespace-nowrap"
+                                    className="bg-gray-100 dark:bg-slate-700 text-slate-700 dark:text-slate-200 text-sm font-medium px-3 py-1.5 rounded-lg hover:bg-gray-200 dark:hover:bg-slate-600 transition-colors whitespace-nowrap"
                                 >
                                     {prompt}
                                 </button>
@@ -286,14 +365,14 @@ const ExamWithAI: React.FC = () => {
                         onKeyDown={handleKeyDown}
                         rows={1}
                         placeholder="Ask your AI-buddy anything..."
-                        className="flex-1 bg-gray-100 border-gray-200 rounded-xl py-2 px-4 resize-none focus:outline-none focus:ring-2 focus:ring-primary max-h-40 overflow-y-auto"
+                        className="flex-1 bg-gray-100 dark:bg-slate-700 border-gray-200 dark:border-slate-600 rounded-xl py-2 px-4 resize-none focus:outline-none focus:ring-2 focus:ring-primary max-h-40 overflow-y-auto"
                         disabled={isLoading}
                         aria-label="Chat input"
                     />
                     <button
                         type="submit"
                         disabled={isLoading || !userInput.trim()}
-                        className="bg-primary text-white font-bold p-3 rounded-lg hover:bg-accent transition-colors duration-200 disabled:bg-gray-300 disabled:cursor-not-allowed flex-shrink-0"
+                        className="bg-primary text-white font-bold p-3 rounded-lg hover:bg-accent transition-colors duration-200 disabled:bg-gray-300 dark:disabled:bg-slate-600 disabled:cursor-not-allowed flex-shrink-0"
                         aria-label="Send message"
                     >
                         <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -301,6 +380,11 @@ const ExamWithAI: React.FC = () => {
                         </svg>
                     </button>
                 </form>
+                 {user?.subscription === 'free' && (
+                    <p className="text-xs text-center text-slate-500 dark:text-slate-400 mt-2">
+                        You have {Math.max(0, 5 - (user?.dailyMessageCount || 0))} free messages remaining today.
+                    </p>
+                )}
             </div>
         </div>
     );

@@ -54,12 +54,20 @@ const MemoryMatchGame: React.FC = () => {
                 // It's a match
                 setCards(prevCards => 
                     prevCards.map(card => 
-                        card.matchId === firstCard.matchId ? { ...card, isMatched: true } : card
+                        card.matchId === firstCard.matchId ? { ...card, isMatched: true, justMatched: true } : card
                     )
                 );
                 setMatchedPairs(prev => prev + 1);
                 setFlippedCards([]);
-                setIsChecking(false);
+
+                setTimeout(() => {
+                    setCards(prevCards => 
+                        prevCards.map(card => 
+                            card.justMatched ? { ...card, justMatched: false } : card
+                        )
+                    );
+                    setIsChecking(false);
+                }, 800);
             } else {
                 // Not a match
                 setTimeout(() => {
@@ -123,10 +131,11 @@ const MemoryMatchGame: React.FC = () => {
                     <div
                         key={card.id}
                         onClick={() => handleCardClick(index)}
-                        className={`aspect-[4/3] rounded-lg shadow-md transition-transform duration-500 cursor-pointer flex items-center justify-center p-3 text-center text-sm md:text-base select-none
+                        className={`h-40 rounded-lg shadow-md transition-transform duration-500 cursor-pointer flex items-center justify-center p-3 text-center text-sm md:text-base select-none
                             ${card.isFlipped || card.isMatched ? 'bg-white [transform:rotateY(180deg)]' : 'bg-primary hover:bg-accent [transform:rotateY(0deg)]'}
-                            ${card.isMatched ? 'border-2 border-green-500 opacity-60 cursor-not-allowed' : ''}`}
-                        style={{ transformStyle: 'preserve-d' }}
+                            ${card.isMatched ? 'border-4 border-green-500 bg-green-50 cursor-not-allowed' : ''}
+                            ${card.justMatched ? 'animate-pulse-success' : ''}`}
+                        style={{ transformStyle: 'preserve-3d' }}
                     >
                         {/* Card Back */}
                         <div className="absolute w-full h-full flex items-center justify-center" style={{ backfaceVisibility: 'hidden' }}>

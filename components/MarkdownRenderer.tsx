@@ -20,7 +20,7 @@ const MarkdownRenderer: React.FC<{ content: string }> = ({ content }) => {
         ),
         thead: ({node, ...props}) => <thead className="bg-slate-50" {...props} />,
         th: ({node, ...props}) => <th className="border-b border-slate-200 p-3 text-left font-semibold text-slate-800" {...props} />,
-        tr: ({node, ...props}) => <tr className="border-b border-slate-200 last:border-b-0" {...props} />,
+        tr: ({node, ...props}) => <tr className="border-b border-slate-200 last:border-b-0 even:bg-slate-50" {...props} />,
         td: ({node, ...props}) => <td className="p-3 align-top" {...props} />,
         code({node, inline, className, children, ...props}) {
             return !inline ? (

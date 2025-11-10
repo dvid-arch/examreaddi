@@ -1,0 +1,31 @@
+
+
+// FIX: Corrected import to use standard `Response` and `NextFunction` types from Express.
+import { Response, NextFunction } from 'express';
+import jwt from 'jsonwebtoken';
+import { AuthenticatedRequest } from '../types.ts';
+
+// FIX: Corrected `res` type to `Response` to fix method access errors.
+export const protect = (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
+    let token;
+
+    if (req.headers.authorization && req.headers.authorization.startsWith('Bearer')) {
+        try {
+            token = req.headers.authorization.split(' ')[1];
+            const decoded = jwt.verify(token, process.env.JWT_SECRET!) as { id: string, email: string };
+            
+            // We attach a simplified user object to the request.
+            // For a full app, you might fetch the full user from the DB here.
+            req.user = decoded;
+
+            next();
+        } catch (error) {
+            console.error(error);
+            res.status(401).json({ message: 'Not authorized, token failed' });
+        }
+    }
+
+    if (!token) {
+        res.status(401).json({ message: 'Not authorized, no token' });
+    }
+};

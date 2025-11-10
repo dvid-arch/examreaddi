@@ -1,15 +1,19 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { useLocation } from 'react-router-dom';
 import Card from '../components/Card.tsx';
-import { pastPapersData } from '../data/pastQuestions.ts';
-import { PastQuestion } from '../types.ts';
+import { PastQuestion, PastPaper } from '../types.ts';
 import MarkdownRenderer from '../components/MarkdownRenderer.tsx';
+import { useAuth } from '../contexts/AuthContext.tsx';
+import { API_BASE_URL } from '../config.ts';
+
 
 interface SearchResult extends PastQuestion {
     subject: string;
     year: number;
     exam: string;
 }
+
+const GUEST_RESULT_LIMIT = 3;
 
 const SearchIcon = () => <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>;
 const BookOpenIcon = () => <svg xmlns="http://www.w3.org/2000/svg" className="h-12 w-12 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" /></svg>;
@@ -18,11 +22,15 @@ const ChevronDownIcon = () => <svg xmlns="http://www.w3.org/2000/svg" className=
 
 const QuestionSearch: React.FC = () => {
     const location = useLocation();
+    const { isAuthenticated, requestLogin } = useAuth();
     const [activeTab, setActiveTab] = useState<'browse' | 'search'>('browse');
+    const [allPapers, setAllPapers] = useState<PastPaper[]>([]);
+    const [isLoading, setIsLoading] = useState(true);
 
     // Search state
     const [query, setQuery] = useState('');
     const [results, setResults] = useState<SearchResult[]>([]);
+    const [totalResultsCount, setTotalResultsCount] = useState(0);
     const [hasSearched, setHasSearched] = useState(false);
 
     // Browse state
@@ -30,11 +38,26 @@ const QuestionSearch: React.FC = () => {
     const [selectedYear, setSelectedYear] = useState('all');
     const [expandedPaperId, setExpandedPaperId] = useState<string | null>(null);
 
+    useEffect(() => {
+        const fetchPapers = async () => {
+            try {
+                const response = await fetch(`${API_BASE_URL}/data/papers`);
+                const data: PastPaper[] = await response.json();
+                setAllPapers(data);
+            } catch (error) {
+                console.error("Failed to fetch past papers:", error);
+            } finally {
+                setIsLoading(false);
+            }
+        };
+        fetchPapers();
+    }, []);
+
     const performSearch = useCallback((searchQuery: string) => {
         if (!searchQuery.trim()) return;
 
         const lowerCaseQuery = searchQuery.toLowerCase();
-        const allQuestions: SearchResult[] = pastPapersData.flatMap(paper =>
+        const allQuestions: SearchResult[] = allPapers.flatMap(paper =>
             paper.questions.map(q => ({
                 ...q,
                 subject: paper.subject,
@@ -48,19 +71,26 @@ const QuestionSearch: React.FC = () => {
             const optionsText = Object.values(q.options).map(o => o.text).join(' ').toLowerCase();
             return questionText.includes(lowerCaseQuery) || optionsText.includes(lowerCaseQuery);
         });
+        
+        setTotalResultsCount(filteredResults.length);
 
-        setResults(filteredResults);
+        if (isAuthenticated) {
+            setResults(filteredResults);
+        } else {
+            setResults(filteredResults.slice(0, GUEST_RESULT_LIMIT));
+        }
+
         setHasSearched(true);
-    }, []);
+    }, [isAuthenticated, allPapers]);
     
     useEffect(() => {
         const initialQuery = location.state?.query;
-        if (typeof initialQuery === 'string') {
+        if (typeof initialQuery === 'string' && allPapers.length > 0) {
             setQuery(initialQuery);
             performSearch(initialQuery);
             setActiveTab('search');
         }
-    }, [location.state, performSearch]);
+    }, [location.state, performSearch, allPapers]);
 
     const handleSearchFormSubmit = (e: React.FormEvent) => {
         e.preventDefault();
@@ -68,22 +98,23 @@ const QuestionSearch: React.FC = () => {
     };
 
     const subjects = useMemo(() => {
-        const uniqueSubjects = [...new Set(pastPapersData.map(p => p.subject))].sort();
+        const uniqueSubjects = [...new Set(allPapers.map(p => p.subject))].sort();
         return ['all', ...uniqueSubjects];
-    }, []);
+    }, [allPapers]);
 
     const years = useMemo(() => {
-        const uniqueYears = [...new Set(pastPapersData.map(p => p.year))].sort((a, b) => b - a);
+        // FIX: Explicitly cast years to numbers for sorting to resolve arithmetic operation type error.
+        const uniqueYears = [...new Set(allPapers.map(p => p.year))].sort((a, b) => Number(b) - Number(a));
         return ['all', ...uniqueYears];
-    }, []);
+    }, [allPapers]);
 
     const filteredPapers = useMemo(() => {
-        return pastPapersData.filter(paper => {
+        return allPapers.filter(paper => {
             const subjectMatch = selectedSubject === 'all' || paper.subject === selectedSubject;
             const yearMatch = selectedYear === 'all' || paper.year === Number(selectedYear);
             return subjectMatch && yearMatch;
         }).sort((a, b) => b.year - a.year || a.subject.localeCompare(b.subject));
-    }, [selectedSubject, selectedYear]);
+    }, [selectedSubject, selectedYear, allPapers]);
 
     const handleTogglePaper = (paperId: string) => {
         setExpandedPaperId(prevId => (prevId === paperId ? null : paperId));
@@ -126,7 +157,9 @@ const QuestionSearch: React.FC = () => {
                     </div>
                 </div>
                 <div className="border-t border-gray-200 pt-4">
-                    {filteredPapers.length > 0 ? (
+                    {isLoading ? (
+                         <p className="text-center text-slate-500 py-10">Loading papers...</p>
+                    ) : filteredPapers.length > 0 ? (
                         <div className="space-y-2">
                             {filteredPapers.map(paper => (
                                 <div key={paper.id} className="border border-gray-200 rounded-lg overflow-hidden">
@@ -210,7 +243,9 @@ const QuestionSearch: React.FC = () => {
                 </form>
 
                 <div className="mt-6 min-h-[400px]">
-                    {!hasSearched ? (
+                    {isLoading ? (
+                        <p className="text-center text-slate-500 py-10">Loading search...</p>
+                    ) : !hasSearched ? (
                         <div className="flex flex-col items-center justify-center h-full text-center">
                             <div className="bg-primary-light text-primary rounded-full p-4 inline-block mb-6">
                                 <BookOpenIcon />
@@ -223,7 +258,7 @@ const QuestionSearch: React.FC = () => {
                     ) : results.length > 0 ? (
                         <div>
                             <h2 className="text-2xl font-bold text-slate-800 mb-4">
-                                Found {results.length} question{results.length > 1 ? 's' : ''} for "{query}"
+                                Found {totalResultsCount} question{totalResultsCount > 1 ? 's' : ''} for "{query}"
                             </h2>
                             <div className="space-y-6">
                                 {results.map((q, index) => (
@@ -262,6 +297,15 @@ const QuestionSearch: React.FC = () => {
                                     </div>
                                 ))}
                             </div>
+                            {!isAuthenticated && totalResultsCount > results.length && (
+                                <div className="text-center mt-8 p-4 bg-gray-50 rounded-lg border">
+                                    <p className="font-semibold text-slate-700">You're viewing {results.length} of {totalResultsCount} results.</p>
+                                    <p className="text-slate-600 mt-1 mb-4">Create a free account to see all results.</p>
+                                    <button onClick={requestLogin} className="bg-primary text-white font-bold py-2 px-6 rounded-lg hover:bg-accent transition-colors">
+                                        Sign Up to View All
+                                    </button>
+                                </div>
+                            )}
                         </div>
                     ) : (
                         <div className="text-center py-10">

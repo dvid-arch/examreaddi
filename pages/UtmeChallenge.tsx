@@ -1,8 +1,11 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import Card from '../components/Card.tsx';
-import { pastPapersData } from '../data/pastQuestions.ts';
-import { LeaderboardScore, ChallengeQuestion } from '../types.ts';
+import { LeaderboardScore, ChallengeQuestion, PastPaper } from '../types.ts';
 import MarkdownRenderer from '../components/MarkdownRenderer.tsx';
+import { useAuth } from '../contexts/AuthContext.tsx';
+import { API_BASE_URL } from '../config.ts';
+import apiService from '../services/apiService.ts';
+
 
 // --- ICONS ---
 const TrophyIcon = () => <svg xmlns="http://www.w3.org/2000/svg" className="h-10 w-10 text-yellow-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M9 11l3-3m0 0l3 3m-3-3v8m0-13a9 9 0 110 18 9 9 0 010-18z" /><path strokeLinecap="round" strokeLinejoin="round" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2h-2m-4-4h2a2 2 0 012 2v4a2 2 0 01-2 2h-2m-4 4H5a2 2 0 01-2-2v-4a2 2 0 012-2h2" /></svg>;
@@ -15,19 +18,16 @@ const CHALLENGE_DURATION_MINUTES = 30;
 const QUESTIONS_PER_SUBJECT = 5;
 const TOTAL_SUBJECTS = 4;
 const TOTAL_QUESTIONS = QUESTIONS_PER_SUBJECT * TOTAL_SUBJECTS;
-const LEADERBOARD_KEY = 'utmeChallengeLeaderboard';
 
 // --- HELPERS ---
-const availableSubjects = [...new Set(pastPapersData.map(p => p.subject))];
 const shuffleArray = (array: any[]) => [...array].sort(() => Math.random() - 0.5);
 
-const prepareChallengeQuestions = (subjects: string[]): ChallengeQuestion[] => {
+const prepareChallengeQuestions = (allPapers: PastPaper[], subjects: string[]): ChallengeQuestion[] => {
     let challengeQuestions: ChallengeQuestion[] = [];
     subjects.forEach(subject => {
-        const questionsForSubject = pastPapersData
+        const questionsForSubject = allPapers
             .filter(paper => paper.subject === subject)
-            .flatMap(paper => paper.questions)
-            .map(q => ({...q, subject})); 
+            .flatMap(paper => paper.questions.map(q => ({...q, subject}))); 
 
         const shuffled = shuffleArray(questionsForSubject);
         challengeQuestions.push(...shuffled.slice(0, QUESTIONS_PER_SUBJECT));
@@ -46,20 +46,54 @@ const formatTime = (seconds: number) => {
 const UtmeChallenge: React.FC = () => {
     type GameState = 'lobby' | 'selecting' | 'playing' | 'results' | 'reviewing';
 
+    const { isAuthenticated, user, requestLogin, requestUpgrade } = useAuth();
     const [gameState, setGameState] = useState<GameState>('lobby');
     const [leaderboard, setLeaderboard] = useState<LeaderboardScore[]>([]);
+    const [allPapers, setAllPapers] = useState<PastPaper[]>([]);
+    const [isLoadingData, setIsLoadingData] = useState(true);
     const [selectedSubjects, setSelectedSubjects] = useState<string[]>([]);
     const [questions, setQuestions] = useState<ChallengeQuestion[]>([]);
     const [userAnswers, setUserAnswers] = useState<{[key: string]: string}>({});
     const [finalScore, setFinalScore] = useState(0);
     const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
     const [timeLeft, setTimeLeft] = useState(CHALLENGE_DURATION_MINUTES * 60);
-    const [userName, setUserName] = useState('');
+    const [scoreSaved, setScoreSaved] = useState(false);
 
     useEffect(() => {
-        const stored = JSON.parse(localStorage.getItem(LEADERBOARD_KEY) || '[]');
-        setLeaderboard(stored.sort((a: LeaderboardScore, b: LeaderboardScore) => b.score - a.score));
+        const fetchData = async () => {
+            setIsLoadingData(true);
+            try {
+                const [leaderboardRes, papersRes] = await Promise.all([
+                    fetch(`${API_BASE_URL}/data/leaderboard`),
+                    fetch(`${API_BASE_URL}/data/papers`)
+                ]);
+                const leaderboardData = await leaderboardRes.json();
+                const papersData = await papersRes.json();
+                setLeaderboard(leaderboardData);
+                setAllPapers(papersData);
+            } catch (error) {
+                console.error("Failed to fetch game data", error);
+            } finally {
+                setIsLoadingData(false);
+            }
+        };
+        fetchData();
     }, []);
+
+    const availableSubjects = useMemo(() => [...new Set(allPapers.map(p => p.subject))].sort(), [allPapers]);
+
+
+    const handleSubmit = useCallback(() => {
+        if (gameState !== 'playing') return;
+        let score = 0;
+        questions.forEach(q => {
+            if (userAnswers[q.id] === q.answer) {
+                score++;
+            }
+        });
+        setFinalScore(score);
+        setGameState('results');
+    }, [gameState, questions, userAnswers]);
 
     useEffect(() => {
         if (gameState !== 'playing' || timeLeft === 0) return;
@@ -74,7 +108,7 @@ const UtmeChallenge: React.FC = () => {
             });
         }, 1000);
         return () => clearInterval(timer);
-    }, [gameState, timeLeft]);
+    }, [gameState, timeLeft, handleSubmit]);
     
     const handleStartSelection = () => setGameState('selecting');
 
@@ -91,7 +125,7 @@ const UtmeChallenge: React.FC = () => {
     };
 
     const handleStartChallenge = () => {
-        const preparedQuestions = prepareChallengeQuestions(selectedSubjects);
+        const preparedQuestions = prepareChallengeQuestions(allPapers, selectedSubjects);
         if (preparedQuestions.length < TOTAL_QUESTIONS) {
             alert("Not enough questions available for the selected subjects. Please try another combination.");
             return;
@@ -100,6 +134,7 @@ const UtmeChallenge: React.FC = () => {
         setCurrentQuestionIndex(0);
         setUserAnswers({});
         setTimeLeft(CHALLENGE_DURATION_MINUTES * 60);
+        setScoreSaved(false);
         setGameState('playing');
     };
 
@@ -107,33 +142,44 @@ const UtmeChallenge: React.FC = () => {
         setUserAnswers(prev => ({ ...prev, [questionId]: optionKey }));
     };
 
-    const handleSubmit = () => {
-        if (gameState !== 'playing') return;
-        let score = 0;
-        questions.forEach(q => {
-            if (userAnswers[q.id] === q.answer) {
-                score++;
-            }
-        });
-        setFinalScore(score);
-        setGameState('results');
-    };
     
-    const handleSaveScore = (e: React.FormEvent) => {
+    const handleSaveScore = async (e: React.FormEvent) => {
         e.preventDefault();
+        if (!isAuthenticated || !user) {
+            requestLogin();
+            return;
+        }
+
+        if (user.subscription === 'free') {
+            requestUpgrade({
+                title: "Join the Leaderboard!",
+                message: "Want to save your score and compete with other students? Upgrade to ExamRedi Pro.",
+                featureList: [
+                    "Save your UTME Challenge high scores",
+                    "See your name on the leaderboard",
+                    "Track your ranking over time",
+                    "Unlock all Pro features"
+                ]
+            });
+            return;
+        }
+
         const newScore: LeaderboardScore = {
-            name: userName.trim() || 'Anonymous',
+            name: user.name,
             score: finalScore,
             totalQuestions: TOTAL_QUESTIONS,
             date: Date.now(),
         };
-        const updatedLeaderboard = [...leaderboard, newScore]
-            .sort((a, b) => b.score - a.score)
-            .slice(0, 10);
-        
-        setLeaderboard(updatedLeaderboard);
-        localStorage.setItem(LEADERBOARD_KEY, JSON.stringify(updatedLeaderboard));
-        setUserName(''); // Clear input for next time
+
+        try {
+            // FIX: Changed from apiService.post to the correct apiService call format.
+            const updatedLeaderboard = await apiService<LeaderboardScore[]>('/data/leaderboard', { method: 'POST', body: newScore });
+            setLeaderboard(updatedLeaderboard);
+            setScoreSaved(true);
+        } catch (error) {
+            console.error("Failed to save score:", error);
+            alert("Could not save score. Please try again.");
+        }
     };
 
     const resetGame = () => {
@@ -163,7 +209,7 @@ const UtmeChallenge: React.FC = () => {
             </Card>
             <Card>
                 <h2 className="text-2xl font-bold text-slate-800 mb-4 text-center">Top Scores</h2>
-                {leaderboard.length > 0 ? (
+                {isLoadingData ? <p>Loading leaderboard...</p> : leaderboard.length > 0 ? (
                     <ol className="list-decimal list-inside space-y-2">
                         {leaderboard.map((entry, index) => (
                             <li key={index} className="p-2 rounded-lg bg-gray-50 flex justify-between items-center">
@@ -252,8 +298,6 @@ const UtmeChallenge: React.FC = () => {
     };
     
     const renderResults = () => {
-        const isHighScore = leaderboard.length < 10 || finalScore > leaderboard[leaderboard.length - 1]?.score;
-
         return (
             <div className="space-y-6">
                 <Card className="text-center">
@@ -261,12 +305,12 @@ const UtmeChallenge: React.FC = () => {
                     <p className="text-slate-600">Your Score:</p>
                     <p className="text-6xl font-extrabold text-primary my-4">{finalScore} <span className="text-4xl text-slate-500">/ {TOTAL_QUESTIONS}</span></p>
                     
-                    {isHighScore && (
-                        <form onSubmit={handleSaveScore} className="mt-4 flex flex-col sm:flex-row items-center justify-center gap-2">
-                             <input type="text" value={userName} onChange={e => setUserName(e.target.value)} placeholder="Enter your name" className="bg-gray-100 border-gray-200 border rounded-lg px-3 py-2" />
-                             <button type="submit" className="bg-yellow-400 text-yellow-900 font-bold py-2 px-4 rounded-lg hover:bg-yellow-500">Save High Score</button>
-                        </form>
+                    {isAuthenticated && !scoreSaved && (
+                         <button onClick={handleSaveScore} className="bg-yellow-400 text-yellow-900 font-bold py-2 px-4 rounded-lg hover:bg-yellow-500">
+                            {user?.subscription === 'pro' ? `Save Score as ${user.name}` : 'Save Score (Pro Only)'}
+                        </button>
                     )}
+                    {scoreSaved && <p className="text-green-600 font-semibold mt-4">Your score has been saved!</p>}
                 </Card>
                 <Card>
                     <h2 className="text-xl font-bold text-slate-800 mb-4 text-center">Performance Breakdown</h2>
