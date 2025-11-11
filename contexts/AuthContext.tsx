@@ -1,4 +1,5 @@
 import React, { createContext, useState, useContext, ReactNode, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import AuthModal, { AuthDetails } from '../components/AuthModal.tsx';
 import UpgradeModal, { UpgradeRequest } from '../components/UpgradeModal.tsx';
 import { User } from '../types.ts';
@@ -9,6 +10,7 @@ import { User } from '../types.ts';
 export interface UserProfile extends User {
     id: string;
     email: string;
+    role: 'user' | 'admin';
 }
 
 interface AuthContextType {
@@ -31,6 +33,17 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 // --- MOCK DATA FOR DEMO MODE ---
 const getTodayDateString = () => new Date().toISOString().split('T')[0];
 
+const MOCK_ADMIN_USER: UserProfile = {
+    id: 'admin-user-001',
+    name: 'Admin User',
+    email: 'admin@examredi.com',
+    subscription: 'pro',
+    aiCredits: 999,
+    dailyMessageCount: 0,
+    lastMessageDate: getTodayDateString(),
+    role: 'admin',
+};
+
 const MOCK_PRO_USER: UserProfile = {
     id: 'pro-user-123',
     name: 'Pro User',
@@ -39,6 +52,7 @@ const MOCK_PRO_USER: UserProfile = {
     aiCredits: 10,
     dailyMessageCount: 0,
     lastMessageDate: getTodayDateString(),
+    role: 'user',
 };
 
 const MOCK_FREE_USER: UserProfile = {
@@ -49,6 +63,7 @@ const MOCK_FREE_USER: UserProfile = {
     aiCredits: 0,
     dailyMessageCount: 0,
     lastMessageDate: getTodayDateString(),
+    role: 'user',
 };
 
 
@@ -59,6 +74,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     const [isUpgradeModalOpen, setIsUpgradeModalOpen] = useState(false);
     const [upgradeRequest, setUpgradeRequest] = useState<UpgradeRequest | null>(null);
     const [isLoading, setIsLoading] = useState(true);
+    const navigate = useNavigate();
 
     // Check for persisted user in localStorage on initial load
     useEffect(() => {
@@ -84,8 +100,12 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         await new Promise(res => setTimeout(res, 500));
         
         let userToLogin: UserProfile;
+        
+        const email = details.email.toLowerCase();
 
-        if (details.email.toLowerCase() === 'pro@examredi.com') {
+        if (email === MOCK_ADMIN_USER.email) {
+            userToLogin = MOCK_ADMIN_USER;
+        } else if (email === MOCK_PRO_USER.email) {
             userToLogin = MOCK_PRO_USER;
         } else {
             // For any other email, log in as a generic free user
@@ -102,6 +122,12 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         localStorage.setItem('examRediUser', JSON.stringify(userToLogin));
         setIsAuthModalOpen(false);
         setIsLoading(false);
+
+        if (userToLogin.role === 'admin') {
+            navigate('/admin/dashboard');
+        } else {
+            navigate('/dashboard');
+        }
     };
 
     const register = async (details: AuthDetails) => {
@@ -117,6 +143,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             aiCredits: 0,
             dailyMessageCount: 0,
             lastMessageDate: getTodayDateString(),
+            role: 'user',
         };
 
         setUser(newUser);
@@ -124,12 +151,14 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         localStorage.setItem('examRediUser', JSON.stringify(newUser));
         setIsAuthModalOpen(false);
         setIsLoading(false);
+        navigate('/dashboard');
     };
 
     const logout = () => {
         localStorage.removeItem('examRediUser');
         setIsAuthenticated(false);
         setUser(null);
+        navigate('/dashboard');
     };
     
     const requestLogin = () => {

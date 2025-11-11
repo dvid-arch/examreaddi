@@ -1,14 +1,12 @@
-
-
-// FIX: Corrected import to use standard `Response` and `NextFunction` types from Express.
-import { Response, NextFunction } from 'express';
+import express, { NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
 import { AuthenticatedRequest } from '../types.ts';
 
-// FIX: Corrected `res` type to `Response` to fix method access errors.
-export const protect = (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
+// FIX: Use express.Response to specify Express types and avoid conflict with DOM types.
+export const protect = (req: AuthenticatedRequest, res: express.Response, next: NextFunction) => {
     let token;
 
+    // FIX: Correctly typed `req` via AuthenticatedRequest now has `headers`.
     if (req.headers.authorization && req.headers.authorization.startsWith('Bearer')) {
         try {
             token = req.headers.authorization.split(' ')[1];
@@ -21,11 +19,13 @@ export const protect = (req: AuthenticatedRequest, res: Response, next: NextFunc
             next();
         } catch (error) {
             console.error(error);
+            // FIX: Correctly typed `res` now has `status` and `json`.
             res.status(401).json({ message: 'Not authorized, token failed' });
         }
     }
 
     if (!token) {
+        // FIX: Correctly typed `res` now has `status` and `json`.
         res.status(401).json({ message: 'Not authorized, no token' });
     }
 };

@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import Card from '../components/Card.tsx';
 import { researchTopic } from '../services/aiService.ts';
@@ -86,18 +87,18 @@ const CareerInstitutions: React.FC = () => {
             <div className="md:col-span-1 md:sticky top-24">
                 <Card>
                     <div className="p-2">
-                        <h1 className="text-2xl font-bold text-slate-800 mb-4">Research Center</h1>
+                        <h1 className="text-2xl font-bold text-slate-800 dark:text-white mb-4">Research Center</h1>
                         
-                        <div className="flex border border-gray-200 rounded-lg p-1 mb-4 bg-gray-50">
+                        <div className="flex border border-gray-200 dark:border-slate-700 rounded-lg p-1 mb-4 bg-gray-50 dark:bg-gray-800">
                             <button
                                 onClick={() => setSearchType('university')}
-                                className={`flex-1 py-2 px-4 rounded-md text-sm font-semibold transition-colors ${searchType === 'university' ? 'bg-primary text-white shadow' : 'text-slate-600'}`}
+                                className={`flex-1 py-2 px-4 rounded-md text-sm font-semibold transition-colors ${searchType === 'university' ? 'bg-primary text-white shadow' : 'text-slate-600 dark:text-slate-300'}`}
                             >
                                 University
                             </button>
                             <button
                                 onClick={() => setSearchType('course')}
-                                className={`flex-1 py-2 px-4 rounded-md text-sm font-semibold transition-colors ${searchType === 'course' ? 'bg-primary text-white shadow' : 'text-slate-600'}`}
+                                className={`flex-1 py-2 px-4 rounded-md text-sm font-semibold transition-colors ${searchType === 'course' ? 'bg-primary text-white shadow' : 'text-slate-600 dark:text-slate-300'}`}
                             >
                                 Course
                             </button>
@@ -105,18 +106,18 @@ const CareerInstitutions: React.FC = () => {
                         
                         <form onSubmit={handleSearch} className="space-y-4">
                             <div>
-                                <label htmlFor="searchQuery" className="block text-sm font-medium text-slate-700 mb-1 capitalize">{searchType} Name</label>
+                                <label htmlFor="searchQuery" className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1 capitalize">{searchType} Name</label>
                                 <input
                                     id="searchQuery"
                                     type="text"
                                     value={query}
                                     onChange={(e) => setQuery(e.target.value)}
                                     placeholder={placeholderText}
-                                    className="w-full bg-gray-100 border-gray-200 border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary"
+                                    className="w-full bg-gray-100 dark:bg-slate-700 border-gray-200 dark:border-slate-600 border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary"
                                     required
                                 />
                                 {user?.subscription === 'pro' && (
-                                    <p className="text-xs text-center text-yellow-700 mt-2">Costs 1 AI Credit</p>
+                                    <p className="text-xs text-center text-yellow-700 dark:text-yellow-300 mt-2">Costs 1 AI Credit</p>
                                 )}
                             </div>
                             <button
@@ -140,8 +141,8 @@ const CareerInstitutions: React.FC = () => {
                                 <div className="bg-primary-light text-primary rounded-full p-4 inline-block mb-6">
                                    <CareerIcon/>
                                 </div>
-                                <h2 className="text-2xl font-bold text-slate-800 mb-2">Explore Your Future</h2>
-                                <p className="text-slate-600 max-w-md">
+                                <h2 className="text-2xl font-bold text-slate-800 dark:text-white mb-2">Explore Your Future</h2>
+                                <p className="text-slate-600 dark:text-slate-300 max-w-md">
                                     Use the panel on the left to search for detailed information about Nigerian universities or specific courses to guide your academic and career decisions.
                                 </p>
                             </div>

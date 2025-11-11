@@ -15,7 +15,7 @@ const Logo = () => (
             <rect x="4" y="14" width="10" height="3" rx="1.5" fill="#FACC15"/>
             <rect x="4" y="19" width="15" height="3" rx="1.5" fill="#22C55E"/>
         </svg>
-        <span className="font-bold text-2xl text-slate-800">ExamRedi</span>
+        <span className="font-bold text-2xl text-slate-800 dark:text-white">ExamRedi</span>
     </div>
 );
 
@@ -34,46 +34,46 @@ const RegisterPage: React.FC<RegisterPageProps> = ({ onRegister }) => {
     };
 
     return (
-        <div className="min-h-screen bg-slate-100 flex items-center justify-center p-4">
+        <div className="min-h-screen bg-slate-100 dark:bg-gray-950 flex items-center justify-center p-4">
             <div className="max-w-md w-full">
                 <Logo />
                 <Card className="p-8">
-                    <h1 className="text-2xl font-bold text-slate-800 text-center mb-1">Create Your Account</h1>
-                    <p className="text-slate-600 text-center mb-6">Start your journey to exam success today!</p>
+                    <h1 className="text-2xl font-bold text-slate-800 dark:text-white text-center mb-1">Create Your Account</h1>
+                    <p className="text-slate-600 dark:text-slate-300 text-center mb-6">Start your journey to exam success today!</p>
                     <form onSubmit={handleRegister} className="space-y-6">
                          <div>
-                            <label htmlFor="name" className="block text-sm font-medium text-slate-700 mb-1">Full Name</label>
+                            <label htmlFor="name" className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Full Name</label>
                             <input
                                 id="name"
                                 type="text"
                                 value={name}
                                 onChange={(e) => setName(e.target.value)}
                                 placeholder="John Doe"
-                                className="w-full bg-gray-100 border-gray-200 border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary"
+                                className="w-full bg-gray-100 dark:bg-slate-700 border-gray-200 dark:border-slate-600 border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary"
                                 required
                             />
                         </div>
                         <div>
-                            <label htmlFor="email" className="block text-sm font-medium text-slate-700 mb-1">Email Address</label>
+                            <label htmlFor="email" className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Email Address</label>
                             <input
                                 id="email"
                                 type="email"
                                 value={email}
                                 onChange={(e) => setEmail(e.target.value)}
                                 placeholder="you@example.com"
-                                className="w-full bg-gray-100 border-gray-200 border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary"
+                                className="w-full bg-gray-100 dark:bg-slate-700 border-gray-200 dark:border-slate-600 border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary"
                                 required
                             />
                         </div>
                         <div>
-                            <label htmlFor="password" className="block text-sm font-medium text-slate-700 mb-1">Password</label>
+                            <label htmlFor="password" className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Password</label>
                             <input
                                 id="password"
                                 type="password"
                                 value={password}
                                 onChange={(e) => setPassword(e.target.value)}
                                 placeholder="••••••••"
-                                className="w-full bg-gray-100 border-gray-200 border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary"
+                                className="w-full bg-gray-100 dark:bg-slate-700 border-gray-200 dark:border-slate-600 border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary"
                                 required
                             />
                         </div>
@@ -84,7 +84,7 @@ const RegisterPage: React.FC<RegisterPageProps> = ({ onRegister }) => {
                             Create Account
                         </button>
                     </form>
-                    <p className="text-center text-sm text-slate-600 mt-6">
+                    <p className="text-center text-sm text-slate-600 dark:text-slate-300 mt-6">
                         Already have an account?{' '}
                         <Link to="/login" className="font-semibold text-primary hover:underline">
                             Login

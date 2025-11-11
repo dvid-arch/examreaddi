@@ -1,5 +1,3 @@
-
-
 import React, { useState } from 'react';
 import { Routes, Route, Navigate, Outlet } from 'react-router-dom';
 import Header from './components/Header.tsx';
@@ -23,6 +21,14 @@ import { AuthProvider } from './contexts/AuthContext.tsx';
 import { PwaInstallProvider } from './contexts/PwaContext.tsx';
 import { ThemeProvider } from './contexts/ThemeContext.tsx';
 import PwaInstallBanner from './components/PwaInstallBanner.tsx';
+
+// Admin Imports
+import AdminLayout from './pages/admin/AdminLayout.tsx';
+import AdminDashboard from './pages/admin/AdminDashboard.tsx';
+import ManageUsers from './pages/admin/ManageUsers.tsx';
+import ManageContent from './pages/admin/ManageContent.tsx';
+import ProtectedRoute from './components/ProtectedRoute.tsx';
+
 
 // --- Main Layout for the entire app ---
 const MainLayout: React.FC = () => {
@@ -48,7 +54,7 @@ const App: React.FC = () => {
       <AuthProvider>
         <PwaInstallProvider>
           <Routes>
-              {/* All routes use the MainLayout */}
+              {/* Main App Routes */}
               <Route element={<MainLayout />}>
                   <Route path="/" element={<Navigate to="/dashboard" replace />} />
                   <Route path="/dashboard" element={<Dashboard />} />
@@ -68,6 +74,18 @@ const App: React.FC = () => {
                   <Route path="/dictionary" element={<ComingSoon title="Dictionary" />} />
               </Route>
               
+              {/* Admin Routes */}
+              <Route path="/admin" element={
+                <ProtectedRoute adminOnly>
+                  <AdminLayout />
+                </ProtectedRoute>
+              }>
+                <Route index element={<Navigate to="dashboard" replace />} />
+                <Route path="dashboard" element={<AdminDashboard />} />
+                <Route path="users" element={<ManageUsers />} />
+                <Route path="content" element={<ManageContent />} />
+              </Route>
+
               {/* Fullscreen route still needs to be separate */}
               <Route path="/take-examination" element={<TakeExamination />} />
 

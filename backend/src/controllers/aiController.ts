@@ -1,7 +1,4 @@
-
-
-// FIX: Corrected import to use standard `Response` type from Express.
-import { Response } from 'express';
+import express from 'express';
 import { AuthenticatedRequest, User } from '../types.ts';
 import { GoogleGenAI, Content } from "@google/genai";
 import fs from 'fs/promises';
@@ -45,15 +42,18 @@ const FREE_TIER_MESSAGES = 5;
 
 // @desc    Handle AI chat messages
 // @route   POST /api/ai/chat
-// FIX: Corrected `res` type to fix method access errors.
-export const handleAiChat = async (req: AuthenticatedRequest, res: Response) => {
+// FIX: Use express.Response for correct types.
+export const handleAiChat = async (req: AuthenticatedRequest, res: express.Response) => {
+    // FIX: Correctly typed `req` now has `body`.
     const { message, history } = req.body;
     const userId = req.user!.id;
     const ai = getAiInstance();
+    // FIX: Correctly typed `res` now has `status` and `json`.
     if (!ai) return res.status(500).json(missingApiKeyError);
 
     const users = await readUsers();
     const user = users.find(u => u.id === userId);
+    // FIX: Correctly typed `res` now has `status` and `json`.
     if (!user) return res.status(404).json({ message: 'User not found' });
 
     if (user.subscription === 'free') {
@@ -63,6 +63,7 @@ export const handleAiChat = async (req: AuthenticatedRequest, res: Response) => 
             user.lastMessageDate = today;
         }
         if (user.dailyMessageCount >= FREE_TIER_MESSAGES) {
+            // FIX: Correctly typed `res` now has `status` and `json`.
             return res.status(403).json({ message: "You have reached your daily message limit."});
         }
         user.dailyMessageCount += 1;
@@ -78,9 +79,11 @@ export const handleAiChat = async (req: AuthenticatedRequest, res: Response) => 
             },
         });
         const result = await chat.sendMessage({ message });
+        // FIX: Correctly typed `res` now has `json`.
         res.json({ reply: result.text });
     } catch (error) {
         console.error("Gemini Chat Error:", error);
+        // FIX: Correctly typed `res` now has `status` and `json`.
         res.status(500).json({ message: "Error communicating with AI service." });
     }
 };
@@ -104,13 +107,16 @@ const handleCreditUsage = async (userId: string, cost: number): Promise<{success
 
 // @desc    Generate a study guide
 // @route   POST /api/ai/generate-guide
-// FIX: Corrected `res` type to fix method access errors.
-export const handleGenerateGuide = async (req: AuthenticatedRequest, res: Response) => {
+// FIX: Use express.Response for correct types.
+export const handleGenerateGuide = async (req: AuthenticatedRequest, res: express.Response) => {
+    // FIX: Correctly typed `req` now has `body`.
     const { subject, topic } = req.body;
     const creditCheck = await handleCreditUsage(req.user!.id, 1);
+    // FIX: Correctly typed `res` now has `status` and `json`.
     if (!creditCheck.success) return res.status(403).json({ message: creditCheck.message });
 
     const ai = getAiInstance();
+    // FIX: Correctly typed `res` now has `status` and `json`.
     if (!ai) return res.status(500).json(missingApiKeyError);
 
     try {
@@ -121,22 +127,27 @@ export const handleGenerateGuide = async (req: AuthenticatedRequest, res: Respon
                 systemInstruction: `You are an expert educator. Create a concise, easy-to-understand study guide. Use clear headings, bullet points, and simple language. Use markdown for formatting.`,
             }
         });
+        // FIX: Correctly typed `res` now has `json`.
         res.json({ guide: response.text });
     } catch (error) {
         console.error("Gemini Guide Generation Error:", error);
+        // FIX: Correctly typed `res` now has `status` and `json`.
         res.status(500).json({ message: "Error generating study guide." });
     }
 };
 
 // @desc    Research a topic (course/university)
 // @route   POST /api/ai/research
-// FIX: Corrected `res` type to fix method access errors.
-export const handleResearch = async (req: AuthenticatedRequest, res: Response) => {
+// FIX: Use express.Response for correct types.
+export const handleResearch = async (req: AuthenticatedRequest, res: express.Response) => {
+    // FIX: Correctly typed `req` now has `body`.
     const { searchType, query } = req.body;
     const creditCheck = await handleCreditUsage(req.user!.id, 1);
+    // FIX: Correctly typed `res` now has `status` and `json`.
     if (!creditCheck.success) return res.status(403).json({ message: creditCheck.message });
 
     const ai = getAiInstance();
+    // FIX: Correctly typed `res` now has `status` and `json`.
     if (!ai) return res.status(500).json(missingApiKeyError);
 
     let prompt = '';
@@ -154,9 +165,11 @@ export const handleResearch = async (req: AuthenticatedRequest, res: Response) =
                 systemInstruction: `You are a knowledgeable career and academic advisor for Nigerian students. Provide accurate, detailed, and encouraging information. Use markdown formatting.`,
             }
         });
+        // FIX: Correctly typed `res` now has `json`.
         res.json({ result: response.text });
     } catch (error) {
         console.error("Gemini Research Error:", error);
+        // FIX: Correctly typed `res` now has `status` and `json`.
         res.status(500).json({ message: "Error researching topic." });
     }
 };

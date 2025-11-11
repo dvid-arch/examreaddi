@@ -94,4 +94,5 @@ export interface User {
   aiCredits: number;
   dailyMessageCount: number;
   lastMessageDate: string; // YYYY-MM-DD format
+  role: 'user' | 'admin';
 }

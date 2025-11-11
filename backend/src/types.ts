@@ -1,7 +1,4 @@
-
-
-// FIX: Changed import to use the standard `Request` type from Express to ensure consistency.
-import { Request } from 'express';
+import express from 'express';
 
 // Replicating frontend types for consistency
 export interface PastQuestionOption {
@@ -59,14 +56,15 @@ export interface User {
     email: string;
     passwordHash: string;
     subscription: 'free' | 'pro';
+    role: 'user' | 'admin';
     aiCredits: number;
     dailyMessageCount: number;
     lastMessageDate: string; // YYYY-MM-DD format
 }
 
 // Extending Express Request type to include authenticated user
-// FIX: Changed ExpressRequest to the standard `Request` type.
-export type AuthenticatedRequest = Request & {
+// FIX: Use express.Request to avoid conflict with browser/DOM Request type.
+export type AuthenticatedRequest = express.Request & {
     user?: {
         id: string;
         email: string;

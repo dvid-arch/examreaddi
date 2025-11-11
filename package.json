@@ -18,14 +18,13 @@
     "remark-math": "6",
     "rehype-katex": "7",
     "rehype-raw": "7",
-    "dotenv": "^17.2.3",
-    "bcryptjs": "^3.0.3",
-    "path": "^0.12.7",
-    "jsonwebtoken": "^9.0.2",
-    "url": "^0.11.4",
     "express": "^5.1.0",
     "cors": "^2.8.5",
-    "fs": "^0.0.1-security"
+    "dotenv": "^17.2.3",
+    "jsonwebtoken": "^9.0.2",
+    "bcryptjs": "^3.0.3",
+    "fs": "^0.0.1-security",
+    "path": "^0.12.7"
   },
   "devDependencies": {
     "@types/node": "^22.14.0",

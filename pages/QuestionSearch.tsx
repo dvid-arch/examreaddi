@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { useLocation } from 'react-router-dom';
 import Card from '../components/Card.tsx';
@@ -134,51 +135,51 @@ const QuestionSearch: React.FC = () => {
             <div className="space-y-6">
                 <div className="flex flex-col sm:flex-row gap-4">
                     <div className="flex-1">
-                        <label htmlFor="subject-filter" className="block text-sm font-medium text-slate-700 mb-1">Filter by Subject</label>
+                        <label htmlFor="subject-filter" className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Filter by Subject</label>
                         <select
                             id="subject-filter"
                             value={selectedSubject}
                             onChange={(e) => setSelectedSubject(e.target.value)}
-                            className="w-full bg-gray-100 border-gray-200 border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary"
+                            className="w-full bg-gray-100 dark:bg-slate-700 border-gray-200 dark:border-slate-600 border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary"
                         >
                             {subjects.map(s => <option key={s} value={s}>{s === 'all' ? 'All Subjects' : s}</option>)}
                         </select>
                     </div>
                      <div className="flex-1">
-                        <label htmlFor="year-filter" className="block text-sm font-medium text-slate-700 mb-1">Filter by Year</label>
+                        <label htmlFor="year-filter" className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Filter by Year</label>
                         <select
                             id="year-filter"
                             value={selectedYear}
                             onChange={(e) => setSelectedYear(e.target.value)}
-                            className="w-full bg-gray-100 border-gray-200 border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary"
+                            className="w-full bg-gray-100 dark:bg-slate-700 border-gray-200 dark:border-slate-600 border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary"
                         >
                            {years.map(y => <option key={y} value={y}>{y === 'all' ? 'All Years' : y}</option>)}
                         </select>
                     </div>
                 </div>
-                <div className="border-t border-gray-200 pt-4">
+                <div className="border-t border-gray-200 dark:border-slate-700 pt-4">
                     {isLoading ? (
                          <p className="text-center text-slate-500 py-10">Loading papers...</p>
                     ) : filteredPapers.length > 0 ? (
                         <div className="space-y-2">
                             {filteredPapers.map(paper => (
-                                <div key={paper.id} className="border border-gray-200 rounded-lg overflow-hidden">
+                                <div key={paper.id} className="border border-gray-200 dark:border-slate-700 rounded-lg overflow-hidden">
                                     <button
                                         onClick={() => handleTogglePaper(paper.id)}
-                                        className="w-full flex justify-between items-center p-3 text-left bg-gray-50 hover:bg-gray-100"
+                                        className="w-full flex justify-between items-center p-3 text-left bg-gray-50 dark:bg-slate-800 hover:bg-gray-100 dark:hover:bg-slate-700"
                                         aria-expanded={expandedPaperId === paper.id}
                                     >
-                                        <span className="font-semibold text-lg text-slate-800">{paper.subject} - {paper.exam} {paper.year}</span>
+                                        <span className="font-semibold text-lg text-slate-800 dark:text-slate-100">{paper.subject} - {paper.exam} {paper.year}</span>
                                         <span className={`transform transition-transform duration-300 ${expandedPaperId === paper.id ? 'rotate-180' : ''}`}>
                                             <ChevronDownIcon />
                                         </span>
                                     </button>
                                     {expandedPaperId === paper.id && (
-                                        <div className="p-3 bg-white space-y-4">
+                                        <div className="p-3 bg-white dark:bg-slate-800/50 space-y-4">
                                             {paper.questions.map((q, index) => (
-                                                <div key={q.id} className="p-3 bg-gray-50 rounded-lg border border-gray-200">
-                                                    <p className="font-semibold text-slate-700 mb-2">Question {index + 1}</p>
-                                                    <div className="text-slate-800 mb-2"><MarkdownRenderer content={q.question} /></div>
+                                                <div key={q.id} className="p-3 bg-gray-50 dark:bg-slate-700/50 rounded-lg border border-gray-200 dark:border-slate-600">
+                                                    <p className="font-semibold text-slate-700 dark:text-slate-300 mb-2">Question {index + 1}</p>
+                                                    <div className="text-slate-800 dark:text-slate-200 mb-2"><MarkdownRenderer content={q.question} /></div>
                                                     {q.questionDiagram && (
                                                         <div className="mb-4">
                                                             <img src={q.questionDiagram} alt="Question diagram" className="max-w-md h-auto rounded-lg border bg-white" />
@@ -189,11 +190,11 @@ const QuestionSearch: React.FC = () => {
                                                             const value = q.options[key];
                                                             const isCorrect = key === q.answer;
                                                             return (
-                                                                <div key={key} className={`p-3 rounded-md flex items-start gap-3 text-sm ${isCorrect ? 'bg-green-100 text-green-800 font-semibold' : 'bg-white'}`}>
+                                                                <div key={key} className={`p-3 rounded-md flex items-start gap-3 text-sm ${isCorrect ? 'bg-green-100 dark:bg-green-500/20 text-green-800 dark:text-green-200 font-semibold' : 'bg-white dark:bg-slate-600'}`}>
                                                                     <div className="flex-1">
                                                                         <div className="flex items-start gap-2">
-                                                                            <span className={`font-bold ${isCorrect ? 'text-green-800' : 'text-slate-800'}`}>{key}.</span>
-                                                                            <div className={isCorrect ? 'text-green-800' : 'text-slate-700'}><MarkdownRenderer content={value.text} /></div>
+                                                                            <span className={`font-bold ${isCorrect ? 'text-green-800 dark:text-green-200' : 'text-slate-800 dark:text-slate-200'}`}>{key}.</span>
+                                                                            <div className={isCorrect ? 'text-green-800 dark:text-green-200' : 'text-slate-700 dark:text-slate-300'}><MarkdownRenderer content={value.text} /></div>
                                                                         </div>
                                                                         {value.diagram && (
                                                                             <div className="mt-2 pl-6">
@@ -233,7 +234,7 @@ const QuestionSearch: React.FC = () => {
                             value={query}
                             onChange={(e) => setQuery(e.target.value)}
                             placeholder="e.g., photosynthesis, gravity, simile..."
-                            className="w-full bg-gray-100 border-gray-200 border rounded-lg pl-10 pr-4 py-2 focus:outline-none focus:ring-2 focus:ring-primary"
+                            className="w-full bg-gray-100 dark:bg-slate-700 border-gray-200 dark:border-slate-600 border rounded-lg pl-10 pr-4 py-2 focus:outline-none focus:ring-2 focus:ring-primary"
                             aria-label="Search for questions"
                         />
                     </div>
@@ -250,24 +251,24 @@ const QuestionSearch: React.FC = () => {
                             <div className="bg-primary-light text-primary rounded-full p-4 inline-block mb-6">
                                 <BookOpenIcon />
                             </div>
-                            <h2 className="text-2xl font-bold text-slate-800 mb-2">Find Questions Instantly</h2>
-                            <p className="text-slate-600 max-w-md">
+                            <h2 className="text-2xl font-bold text-slate-800 dark:text-white mb-2">Find Questions Instantly</h2>
+                            <p className="text-slate-600 dark:text-slate-300 max-w-md">
                                 Enter a topic, keyword, or phrase in the search bar above to find relevant past questions from our database.
                             </p>
                         </div>
                     ) : results.length > 0 ? (
                         <div>
-                            <h2 className="text-2xl font-bold text-slate-800 mb-4">
+                            <h2 className="text-2xl font-bold text-slate-800 dark:text-white mb-4">
                                 Found {totalResultsCount} question{totalResultsCount > 1 ? 's' : ''} for "{query}"
                             </h2>
                             <div className="space-y-6">
                                 {results.map((q, index) => (
-                                    <div key={q.id} className="p-3 bg-gray-50 rounded-lg border border-gray-200">
-                                        <div className="flex justify-between items-start text-sm text-slate-500 mb-2">
+                                    <div key={q.id} className="p-3 bg-gray-50 dark:bg-slate-800/50 rounded-lg border border-gray-200 dark:border-slate-700">
+                                        <div className="flex justify-between items-start text-sm text-slate-500 dark:text-slate-400 mb-2">
                                             <span>Question {index + 1}</span>
                                             <span className="font-semibold">{q.subject} - {q.exam} {q.year}</span>
                                         </div>
-                                        <div className="text-lg text-slate-800 mb-2"><MarkdownRenderer content={highlightQuery(q.question, query)} /></div>
+                                        <div className="text-lg text-slate-800 dark:text-slate-200 mb-2"><MarkdownRenderer content={highlightQuery(q.question, query)} /></div>
                                         {q.questionDiagram && (
                                             <div className="mb-4">
                                                 <img src={q.questionDiagram} alt="Question diagram" className="max-w-md h-auto rounded-lg border bg-white" />
@@ -278,11 +279,11 @@ const QuestionSearch: React.FC = () => {
                                                 const value = q.options[key];
                                                 const isCorrect = key === q.answer;
                                                 return (
-                                                    <div key={key} className={`p-3 rounded-md flex items-start gap-3 text-sm ${isCorrect ? 'bg-green-100 text-green-900 font-semibold' : 'bg-white'}`}>
+                                                    <div key={key} className={`p-3 rounded-md flex items-start gap-3 text-sm ${isCorrect ? 'bg-green-100 dark:bg-green-500/20 text-green-900 dark:text-green-200 font-semibold' : 'bg-white dark:bg-slate-700'}`}>
                                                          <div className="flex-1">
                                                             <div className="flex items-start gap-2">
-                                                                <span className={`font-bold ${isCorrect ? 'text-green-900' : 'text-slate-800'}`}>{key}.</span>
-                                                                <div className={isCorrect ? 'text-green-900' : 'text-slate-700'}><MarkdownRenderer content={highlightQuery(value.text, query)} /></div>
+                                                                <span className={`font-bold ${isCorrect ? 'text-green-900 dark:text-green-200' : 'text-slate-800 dark:text-slate-200'}`}>{key}.</span>
+                                                                <div className={isCorrect ? 'text-green-900 dark:text-green-200' : 'text-slate-700 dark:text-slate-300'}><MarkdownRenderer content={highlightQuery(value.text, query)} /></div>
                                                             </div>
                                                             {value.diagram && (
                                                                 <div className="mt-2 pl-6">
@@ -298,9 +299,9 @@ const QuestionSearch: React.FC = () => {
                                 ))}
                             </div>
                             {!isAuthenticated && totalResultsCount > results.length && (
-                                <div className="text-center mt-8 p-4 bg-gray-50 rounded-lg border">
-                                    <p className="font-semibold text-slate-700">You're viewing {results.length} of {totalResultsCount} results.</p>
-                                    <p className="text-slate-600 mt-1 mb-4">Create a free account to see all results.</p>
+                                <div className="text-center mt-8 p-4 bg-gray-50 dark:bg-slate-800 rounded-lg border dark:border-slate-700">
+                                    <p className="font-semibold text-slate-700 dark:text-slate-200">You're viewing {results.length} of {totalResultsCount} results.</p>
+                                    <p className="text-slate-600 dark:text-slate-300 mt-1 mb-4">Create a free account to see all results.</p>
                                     <button onClick={requestLogin} className="bg-primary text-white font-bold py-2 px-6 rounded-lg hover:bg-accent transition-colors">
                                         Sign Up to View All
                                     </button>
@@ -309,8 +310,8 @@ const QuestionSearch: React.FC = () => {
                         </div>
                     ) : (
                         <div className="text-center py-10">
-                             <h2 className="text-2xl font-bold text-slate-700">No Results Found</h2>
-                            <p className="text-slate-500 mt-2">We couldn't find any questions matching "{query}". Try a different search term.</p>
+                             <h2 className="text-2xl font-bold text-slate-700 dark:text-white">No Results Found</h2>
+                            <p className="text-slate-500 dark:text-slate-400 mt-2">We couldn't find any questions matching "{query}". Try a different search term.</p>
                         </div>
                     )}
                 </div>
@@ -321,18 +322,18 @@ const QuestionSearch: React.FC = () => {
     return (
         <div className="space-y-6">
             <Card>
-                <h1 className="text-3xl font-bold text-slate-800">Past Questions</h1>
-                <p className="text-slate-600 mt-2">Browse the library of past papers or search for specific questions by keyword.</p>
-                 <div className="mt-6 flex border border-gray-200 rounded-lg p-1 bg-gray-50 max-w-md">
+                <h1 className="text-3xl font-bold text-slate-800 dark:text-white">Past Questions</h1>
+                <p className="text-slate-600 dark:text-slate-300 mt-2">Browse the library of past papers or search for specific questions by keyword.</p>
+                 <div className="mt-6 flex border border-gray-200 dark:border-slate-700 rounded-lg p-1 bg-gray-50 dark:bg-gray-800 max-w-md">
                     <button
                         onClick={() => setActiveTab('browse')}
-                        className={`flex-1 py-2 px-4 rounded-md text-sm font-semibold transition-colors ${activeTab === 'browse' ? 'bg-primary text-white shadow' : 'text-slate-600'}`}
+                        className={`flex-1 py-2 px-4 rounded-md text-sm font-semibold transition-colors ${activeTab === 'browse' ? 'bg-primary text-white shadow' : 'text-slate-600 dark:text-slate-300'}`}
                     >
                         Browse Library
                     </button>
                     <button
                         onClick={() => setActiveTab('search')}
-                        className={`flex-1 py-2 px-4 rounded-md text-sm font-semibold transition-colors ${activeTab === 'search' ? 'bg-primary text-white shadow' : 'text-slate-600'}`}
+                        className={`flex-1 py-2 px-4 rounded-md text-sm font-semibold transition-colors ${activeTab === 'search' ? 'bg-primary text-white shadow' : 'text-slate-600 dark:text-slate-300'}`}
                     >
                         Search by Keyword
                     </button>
