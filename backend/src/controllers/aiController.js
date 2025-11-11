@@ -1,13 +1,6 @@
-
-import { Response } from 'express';
-import { AuthenticatedRequest, User } from '../types.ts';
-import { GoogleGenAI, Content } from "@google/genai";
-import fs from 'fs/promises';
-import path from 'path';
-import { fileURLToPath } from 'url';
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+const { GoogleGenAI } = require("@google/genai");
+const fs = require('fs/promises');
+const path = require('path');
 
 const dbPath = path.join(__dirname, '..', 'db');
 const usersFilePath = path.join(dbPath, 'users.json');
@@ -21,21 +14,21 @@ const getAiInstance = () => {
   return new GoogleGenAI({ apiKey });
 };
 
-const readUsers = async (): Promise<User[]> => {
+const readUsers = async () => {
     try {
         const data = await fs.readFile(usersFilePath, 'utf-8');
         return JSON.parse(data);
     } catch (error) { return []; }
 };
 
-const writeUsers = async (users: User[]) => {
+const writeUsers = async (users) => {
     await fs.mkdir(dbPath, { recursive: true });
     await fs.writeFile(usersFilePath, JSON.stringify(users, null, 2));
 };
 
 const missingApiKeyError = { message: "The AI service is not configured on the server." };
 
-const buildHistory = (history: {role: 'user' | 'model', text: string}[]): Content[] => {
+const buildHistory = (history) => {
     return history.map(msg => ({
         role: msg.role,
         parts: [{ text: msg.text }]
@@ -47,9 +40,9 @@ const FREE_TIER_MESSAGES = 5;
 
 // @desc    Handle AI chat messages
 // @route   POST /api/ai/chat
-export const handleAiChat = async (req: AuthenticatedRequest, res: Response) => {
+const handleAiChat = async (req, res) => {
     const { message, history } = req.body;
-    const userId = req.user!.id;
+    const userId = req.user.id;
     const ai = getAiInstance();
     if (!ai) return res.status(500).json(missingApiKeyError);
 
@@ -73,7 +66,7 @@ export const handleAiChat = async (req: AuthenticatedRequest, res: Response) => 
     try {
         const chat = ai.chats.create({
             model: 'gemini-2.5-flash',
-            history: buildHistory(history),
+            history: buildHistory(history || []),
             config: {
                 systemInstruction: `You are Ai-buddy, a friendly and encouraging AI tutor for ExamRedi. Your goal is to help students understand complex topics and prepare for their exams. Keep your tone positive and supportive. Format responses using markdown.`,
             },
@@ -86,7 +79,7 @@ export const handleAiChat = async (req: AuthenticatedRequest, res: Response) => 
     }
 };
 
-const handleCreditUsage = async (userId: string, cost: number): Promise<{success: boolean, message?: string}> => {
+const handleCreditUsage = async (userId, cost) => {
     const users = await readUsers();
     const user = users.find(u => u.id === userId);
     if (!user) return { success: false, message: "User not found" };
@@ -105,9 +98,9 @@ const handleCreditUsage = async (userId: string, cost: number): Promise<{success
 
 // @desc    Generate a study guide
 // @route   POST /api/ai/generate-guide
-export const handleGenerateGuide = async (req: AuthenticatedRequest, res: Response) => {
+const handleGenerateGuide = async (req, res) => {
     const { subject, topic } = req.body;
-    const creditCheck = await handleCreditUsage(req.user!.id, 1);
+    const creditCheck = await handleCreditUsage(req.user.id, 1);
     if (!creditCheck.success) return res.status(403).json({ message: creditCheck.message });
 
     const ai = getAiInstance();
@@ -130,9 +123,9 @@ export const handleGenerateGuide = async (req: AuthenticatedRequest, res: Respon
 
 // @desc    Research a topic (course/university)
 // @route   POST /api/ai/research
-export const handleResearch = async (req: AuthenticatedRequest, res: Response) => {
+const handleResearch = async (req, res) => {
     const { searchType, query } = req.body;
-    const creditCheck = await handleCreditUsage(req.user!.id, 1);
+    const creditCheck = await handleCreditUsage(req.user.id, 1);
     if (!creditCheck.success) return res.status(403).json({ message: creditCheck.message });
 
     const ai = getAiInstance();
@@ -159,3 +152,5 @@ export const handleResearch = async (req: AuthenticatedRequest, res: Response) =
         res.status(500).json({ message: "Error researching topic." });
     }
 };
+
+module.exports = { handleAiChat, handleGenerateGuide, handleResearch };

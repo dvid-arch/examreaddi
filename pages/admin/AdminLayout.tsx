@@ -54,7 +54,7 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({ isOpen, onClose }) => {
             >
                  <div className="flex items-center space-x-2 px-4 mb-6">
                     <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="h-7 w-7"><rect x="4" y="4" width="12" height="3" rx="1.5" fill="#3B82F6"/><rect x="4" y="9" width="18" height="3" rx="1.5" fill="#EF4444"/><rect x="4" y="14" width="10" height="3" rx="1.5" fill="#FACC15"/><rect x="4" y="19" width="15" height="3" rx="1.5" fill="#22C55E"/></svg>
-                    <span className="font-bold text-xl">ExamRedi Admin</span>
+                    <span className="font-bold text-xl">ExamRedi <br/> <span className="text-sm">Admin</span></span>
                 </div>
                 <nav className="flex-1 space-y-2">
                      {navItems.map(item => (

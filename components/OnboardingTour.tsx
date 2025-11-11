@@ -106,26 +106,27 @@ const OnboardingTour: React.FC<OnboardingTourProps> = ({ steps, onComplete }) =>
   if (!currentStep) return null;
 
   return (
-    <div className="fixed inset-0 z-50">
-        <div className="tour-backdrop" onClick={handleComplete}></div>
-        
+    <div className="fixed inset-0 z-[990] pointer-events-none">
+        {/* Invisible layer to catch clicks and close the tour */}
+        <div className="fixed inset-0 z-[998] pointer-events-auto" onClick={handleComplete}></div>
+
         <div 
             ref={tooltipRef}
-            className={`tour-tooltip ${!targetRect ? 'tour-modal' : ''}`} 
+            className={`tour-tooltip bg-white dark:bg-slate-800 pointer-events-auto ${!targetRect ? 'tour-modal' : ''}`} 
             style={getTooltipPosition()}
         >
             <div className="p-4">
-                <h3 className="font-bold text-lg text-slate-800">{currentStep.title}</h3>
-                <p className="text-sm text-slate-600 mt-2">{currentStep.content}</p>
+                <h3 className="font-bold text-lg text-slate-800 dark:text-slate-50">{currentStep.title}</h3>
+                <p className="text-sm text-slate-600 dark:text-slate-300 mt-2">{currentStep.content}</p>
             </div>
-            <div className="p-4 bg-gray-50 flex justify-between items-center rounded-b-lg">
-                <span className="text-sm font-semibold text-slate-500">{stepIndex + 1} / {steps.length}</span>
+            <div className="p-4 bg-gray-50 dark:bg-slate-700/50 flex justify-between items-center rounded-b-lg">
+                <span className="text-sm font-semibold text-slate-500 dark:text-slate-400">{stepIndex + 1} / {steps.length}</span>
                 <div className="flex items-center gap-2">
-                     <button onClick={handleComplete} className="text-sm font-semibold text-slate-600 px-3 py-1 rounded hover:bg-gray-200">
+                     <button onClick={handleComplete} className="text-sm font-semibold text-slate-600 dark:text-slate-300 px-3 py-1 rounded hover:bg-gray-200 dark:hover:bg-slate-600">
                         Skip
                     </button>
                     {stepIndex > 0 && (
-                        <button onClick={handlePrev} className="text-sm font-semibold text-slate-600 px-3 py-1 rounded hover:bg-gray-200">
+                        <button onClick={handlePrev} className="text-sm font-semibold text-slate-600 dark:text-slate-300 px-3 py-1 rounded hover:bg-gray-200 dark:hover:bg-slate-600">
                             Back
                         </button>
                     )}

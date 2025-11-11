@@ -1,21 +1,14 @@
-
-import { Response, NextFunction } from 'express';
-import fs from 'fs/promises';
-import path from 'path';
-import { fileURLToPath } from 'url';
-import { AuthenticatedRequest, User } from '../types.ts';
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+const fs = require('fs/promises');
+const path = require('path');
 
 const usersFilePath = path.join(__dirname, '..', 'db', 'users.json');
 
-export const admin = async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
+const admin = async (req, res, next) => {
     if (req.user) {
         try {
             const data = await fs.readFile(usersFilePath, 'utf-8');
-            const users: User[] = JSON.parse(data);
-            const user = users.find(u => u.id === req.user!.id);
+            const users = JSON.parse(data);
+            const user = users.find(u => u.id === req.user.id);
 
             if (user && user.role === 'admin') {
                 next();
@@ -29,3 +22,5 @@ export const admin = async (req: AuthenticatedRequest, res: Response, next: Next
         res.status(401).json({ message: 'Not authorized' });
     }
 };
+
+module.exports = { admin };

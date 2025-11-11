@@ -1,29 +1,17 @@
 import React, { useState, useEffect } from 'react';
 import Card from '../../components/Card.tsx';
+import apiService from '../../services/apiService.ts';
+import { UserProfile } from '../../contexts/AuthContext.tsx';
 
-// In a real app, this would be defined in a shared types file.
-interface AdminUser {
-    id: string;
-    name: string;
-    email: string;
-    subscription: 'free' | 'pro';
-    role: 'user' | 'admin';
-}
-
-const FAKE_USERS: AdminUser[] = [
-    { id: 'admin-user-001', name: 'Admin User', email: 'admin@examredi.com', subscription: 'pro', role: 'admin' },
-    { id: 'pro-user-123', name: 'Pro User', email: 'pro@examredi.com', subscription: 'pro', role: 'user' },
-    { id: 'free-user-456', name: 'Free User', email: 'free@examredi.com', subscription: 'free', role: 'user' },
-];
 
 // --- Modal Component for Add/Edit User ---
 interface UserModalProps {
-    user: AdminUser | null;
-    onSave: (user: AdminUser) => void;
+    user: UserProfile | null;
+    onSave: (user: UserProfile) => void;
     onClose: () => void;
 }
 const UserModal: React.FC<UserModalProps> = ({ user, onSave, onClose }) => {
-    const [formData, setFormData] = useState<Partial<AdminUser>>({
+    const [formData, setFormData] = useState<Partial<UserProfile>>({
         name: '', email: '', subscription: 'free', role: 'user', ...user
     });
 
@@ -34,7 +22,7 @@ const UserModal: React.FC<UserModalProps> = ({ user, onSave, onClose }) => {
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-        onSave(formData as AdminUser);
+        onSave(formData as UserProfile);
     };
 
     return (
@@ -76,31 +64,41 @@ const UserModal: React.FC<UserModalProps> = ({ user, onSave, onClose }) => {
 
 
 const ManageUsers: React.FC = () => {
-    const [users, setUsers] = useState<AdminUser[]>([]);
+    const [users, setUsers] = useState<UserProfile[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [isModalOpen, setIsModalOpen] = useState(false);
-    const [editingUser, setEditingUser] = useState<AdminUser | null>(null);
+    const [editingUser, setEditingUser] = useState<UserProfile | null>(null);
+
+    const fetchUsers = async () => {
+        setIsLoading(true);
+        try {
+            const data = await apiService<UserProfile[]>('/admin/users');
+            setUsers(data);
+        } catch (err) {
+            setError(err instanceof Error ? err.message : 'Failed to fetch users');
+        } finally {
+            setIsLoading(false);
+        }
+    };
 
     useEffect(() => {
-        // Simulating API call to fetch users
-        const fetchUsers = () => {
-            setIsLoading(true);
-            setTimeout(() => {
-                setUsers(FAKE_USERS);
-                setIsLoading(false);
-            }, 500);
-        };
         fetchUsers();
     }, []);
     
-    const handleSubscriptionChange = (userId: string, newSubscription: 'free' | 'pro') => {
-        setUsers(users.map(user => 
-            user.id === userId ? { ...user, subscription: newSubscription } : user
-        ));
+    const handleSubscriptionChange = async (userId: string, newSubscription: 'free' | 'pro') => {
+        try {
+            const updatedUser = await apiService<UserProfile>(`/admin/users/${userId}/subscription`, {
+                method: 'PUT',
+                body: { subscription: newSubscription }
+            });
+            setUsers(users.map(user => user.id === userId ? updatedUser : user));
+        } catch (err) {
+            alert(err instanceof Error ? err.message : 'Failed to update subscription');
+        }
     };
 
-    const openModal = (user: AdminUser | null) => {
+    const openModal = (user: UserProfile | null) => {
         setEditingUser(user);
         setIsModalOpen(true);
     };
@@ -110,7 +108,8 @@ const ManageUsers: React.FC = () => {
         setIsModalOpen(false);
     };
 
-    const handleSaveUser = (userToSave: AdminUser) => {
+    const handleSaveUser = (userToSave: UserProfile) => {
+        // This is a demo feature. Real implementation would call POST or PUT to an admin endpoint.
         if (userToSave.id) {
             setUsers(users.map(u => u.id === userToSave.id ? userToSave : u));
         } else {
@@ -121,6 +120,7 @@ const ManageUsers: React.FC = () => {
     };
     
     const handleDeleteUser = (userId: string) => {
+         // This is a demo feature. Real implementation would call DELETE to an admin endpoint.
         if(window.confirm("Are you sure you want to delete this user? This is a demo action.")) {
             setUsers(users.filter(u => u.id !== userId));
         }
@@ -132,7 +132,7 @@ const ManageUsers: React.FC = () => {
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                 <h1 className="text-3xl font-bold text-slate-800 dark:text-white">Manage Users</h1>
                  <button onClick={() => openModal(null)} className="bg-primary text-white font-bold py-2 px-4 rounded-lg hover:bg-accent w-full md:w-auto">
-                    Add User
+                    Add User (Demo)
                 </button>
             </div>
             <Card>
@@ -179,9 +179,9 @@ const ManageUsers: React.FC = () => {
                                             )}
                                         </td>
                                          <td className="px-2 py-4 sm:px-4 flex flex-col items-start gap-1 sm:flex-row sm:gap-2">
-                                            <button onClick={() => openModal(user)} className="font-semibold text-blue-600 dark:text-blue-400 hover:underline">Edit</button>
+                                            <button onClick={() => openModal(user)} className="font-semibold text-blue-600 dark:text-blue-400 hover:underline">Edit (Demo)</button>
                                             {user.role !== 'admin' && (
-                                                <button onClick={() => handleDeleteUser(user.id)} className="font-semibold text-red-600 dark:text-red-400 hover:underline">Delete</button>
+                                                <button onClick={() => handleDeleteUser(user.id)} className="font-semibold text-red-600 dark:text-red-400 hover:underline">Delete (Demo)</button>
                                             )}
                                         </td>
                                     </tr>

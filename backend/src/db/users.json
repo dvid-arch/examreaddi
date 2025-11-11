@@ -1,3 +1,4 @@
+
 [
   {
     "id": "1",
@@ -8,7 +9,8 @@
     "role": "user",
     "aiCredits": 0,
     "dailyMessageCount": 0,
-    "lastMessageDate": "2024-01-01"
+    "lastMessageDate": "2024-01-01",
+    "refreshToken": ""
   },
   {
     "id": "2",
@@ -19,7 +21,8 @@
     "role": "user",
     "aiCredits": 10,
     "dailyMessageCount": 0,
-    "lastMessageDate": "2024-01-01"
+    "lastMessageDate": "2024-01-01",
+    "refreshToken": ""
   },
   {
     "id": "admin-user-001",
@@ -30,6 +33,7 @@
     "role": "admin",
     "aiCredits": 999,
     "dailyMessageCount": 0,
-    "lastMessageDate": "2024-01-01"
+    "lastMessageDate": "2024-01-01",
+    "refreshToken": ""
   }
 ]

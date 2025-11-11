@@ -1,11 +1,10 @@
-
-import express, { Request, Response } from 'express';
-import cors from 'cors';
-import dotenv from 'dotenv';
-import authRoutes from './routes/authRoutes.ts';
-import dataRoutes from './routes/dataRoutes.ts';
-import aiRoutes from './routes/aiRoutes.ts';
-import adminRoutes from './routes/adminRoutes.ts';
+const express = require('express');
+const cors = require('cors');
+const dotenv = require('dotenv');
+const authRoutes = require('./routes/authRoutes.js');
+const dataRoutes = require('./routes/dataRoutes.js');
+const aiRoutes = require('./routes/aiRoutes.js');
+const adminRoutes = require('./routes/adminRoutes.js');
 
 dotenv.config();
 
@@ -15,7 +14,7 @@ const port = process.env.PORT || 5000;
 app.use(cors());
 app.use(express.json());
 
-app.get('/', (req: Request, res: Response) => {
+app.get('/', (req, res) => {
     res.send('ExamRedi Backend is running!');
 });
 

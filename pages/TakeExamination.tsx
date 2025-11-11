@@ -5,7 +5,6 @@ import QuestionRenderer from '../components/QuestionRenderer.tsx';
 import MarkdownRenderer from '../components/MarkdownRenderer.tsx';
 import { useAuth } from '../contexts/AuthContext.tsx';
 import { usePwaInstall } from '../contexts/PwaContext.tsx';
-import { API_BASE_URL } from '../config.ts';
 import apiService from '../services/apiService.ts';
 
 
@@ -92,8 +91,7 @@ const TakeExamination: React.FC = () => {
             if (user.subscription === 'free') {
                 showInstallBanner();
             }
-            const result: QuizResult = {
-                id: new Date().toISOString(),
+            const result: Omit<QuizResult, 'id'> = {
                 paperId: 'practice-session',
                 exam: examTitle || 'Practice',
                 subject: subjects.join(', '),
@@ -104,7 +102,6 @@ const TakeExamination: React.FC = () => {
                 completedAt: Date.now(),
             };
             try {
-                // FIX: Changed from apiService.post to the correct apiService call format.
                 await apiService('/data/performance', { method: 'POST', body: result });
             } catch (error) {
                 console.error("Failed to save performance result:", error);
@@ -129,8 +126,7 @@ const TakeExamination: React.FC = () => {
                  preparedQuestions = customQuestions;
             } else {
                 try {
-                    const response = await fetch(`${API_BASE_URL}/data/papers`);
-                    const papers: PastPaper[] = await response.json();
+                    const papers: PastPaper[] = await apiService('/data/papers');
                     setAllPapers(papers);
 
                     const numQuestions = questionsPerSubject || 10;

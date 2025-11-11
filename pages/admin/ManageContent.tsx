@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
 import Card from '../../components/Card.tsx';
 import QuestionRenderer from '../../components/QuestionRenderer.tsx';
+import MarkdownRenderer from '../../components/MarkdownRenderer.tsx';
 import { PastPaper, StudyGuide, PastQuestion } from '../../types.ts';
-import { pastPapersData } from '../../data/pastQuestions.ts';
-import { allStudyGuides } from '../../data/studyGuides.ts';
+import apiService from '../../services/apiService.ts';
+
 
 type ContentType = 'papers' | 'guides';
 
@@ -241,7 +241,6 @@ const ManageQuestionsModal: React.FC<ManageQuestionsProps> = ({ paper, onClose, 
                                             imageClassName="max-w-sm"
                                         />
                                         <div className="mt-2 pl-5 space-y-1">
-                                            {/* FIX: Use Object.keys to iterate over options to ensure correct type inference for `option`. */}
                                             {Object.keys(q.options).map((key) => {
                                                 const option = q.options[key];
                                                 const isCorrect = key === q.answer;
@@ -249,7 +248,7 @@ const ManageQuestionsModal: React.FC<ManageQuestionsProps> = ({ paper, onClose, 
                                                     <div key={key} className={`text-sm flex items-start gap-2 p-2 rounded ${isCorrect ? 'bg-green-100 dark:bg-green-500/20' : ''}`}>
                                                         <span className={`font-bold ${isCorrect ? 'text-green-800 dark:text-green-300' : 'text-slate-600 dark:text-slate-400'}`}>{key}.</span>
                                                         <div className={isCorrect ? 'text-green-800 dark:text-green-200' : 'text-slate-700 dark:text-slate-300'}>
-                                                            <p>{option.text}</p>
+                                                            <MarkdownRenderer content={option.text} />
                                                             {option.diagram && <img src={option.diagram} alt={`Option ${key}`} className="mt-1 max-w-[150px] h-auto rounded border dark:border-slate-600" />}
                                                         </div>
                                                     </div>
@@ -383,18 +382,29 @@ const ManageContent: React.FC = () => {
     const [managingPaper, setManagingPaper] = useState<PastPaper | null>(null);
 
     useEffect(() => {
-        setIsLoading(true);
-        setTimeout(() => {
-            setPapers(pastPapersData);
-            setGuides(allStudyGuides);
-            setIsLoading(false);
-        }, 500);
+        const fetchData = async () => {
+            setIsLoading(true);
+            try {
+                const [papersData, guidesData] = await Promise.all([
+                    apiService<PastPaper[]>('/data/papers'),
+                    apiService<StudyGuide[]>('/data/guides'),
+                ]);
+                setPapers(papersData);
+                setGuides(guidesData);
+            } catch (error) {
+                console.error("Failed to fetch content", error);
+            } finally {
+                setIsLoading(false);
+            }
+        };
+        fetchData();
     }, []);
 
     // --- Paper Handlers ---
     const openPaperModal = (paper: PastPaper | null) => { setEditingPaper(paper); setIsPaperModalOpen(true); };
     const closePaperModal = () => { setEditingPaper(null); setIsPaperModalOpen(false); };
     const handleSavePaper = (paperToSave: PastPaper) => {
+        // Demo only
         if (paperToSave.id) {
             setPapers(papers.map(p => p.id === paperToSave.id ? paperToSave : p));
         } else {
@@ -405,10 +415,12 @@ const ManageContent: React.FC = () => {
     };
     const handleDeletePaper = (paperId: string) => {
         if (window.confirm('Are you sure you want to delete this paper?')) {
+            // Demo only
             setPapers(prev => prev.filter(p => p.id !== paperId));
         }
     };
      const handleUpdatePaper = (updatedPaper: PastPaper) => {
+        // Demo only
         setPapers(prev => prev.map(p => p.id === updatedPaper.id ? updatedPaper : p));
         setManagingPaper(updatedPaper);
     };
@@ -417,6 +429,7 @@ const ManageContent: React.FC = () => {
     const openGuideModal = (guide: StudyGuide | null) => { setEditingGuide(guide); setIsGuideModalOpen(true); };
     const closeGuideModal = () => { setEditingGuide(null); setIsGuideModalOpen(false); };
     const handleSaveGuide = (guideToSave: StudyGuide) => {
+         // Demo only
         if (guideToSave.id) {
             setGuides(guides.map(g => g.id === guideToSave.id ? guideToSave : g));
         } else {
@@ -427,6 +440,7 @@ const ManageContent: React.FC = () => {
     };
     const handleDeleteGuide = (guideId: string) => {
         if (window.confirm('Are you sure you want to delete this guide?')) {
+             // Demo only
             setGuides(prev => prev.filter(g => g.id !== guideId));
         }
     };

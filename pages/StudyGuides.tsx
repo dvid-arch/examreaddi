@@ -4,7 +4,7 @@ import { generateStudyGuide } from '../services/aiService.ts';
 import { StudyGuide } from '../types.ts';
 import MarkdownRenderer from '../components/MarkdownRenderer.tsx';
 import { useAuth } from '../contexts/AuthContext.tsx';
-import { API_BASE_URL } from '../config.ts';
+import apiService from '../services/apiService.ts';
 
 
 // Loading spinner component
@@ -114,8 +114,7 @@ const StudyGuides: React.FC = () => {
     useEffect(() => {
         const fetchGuides = async () => {
             try {
-                const response = await fetch(`${API_BASE_URL}/data/guides`);
-                const data: StudyGuide[] = await response.json();
+                const data: StudyGuide[] = await apiService('/data/guides');
                 setAllStudyGuides(data);
             } catch (error) {
                 console.error("Failed to fetch study guides", error);

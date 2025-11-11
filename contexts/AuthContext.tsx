@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import AuthModal, { AuthDetails } from '../components/AuthModal.tsx';
 import UpgradeModal, { UpgradeRequest } from '../components/UpgradeModal.tsx';
 import { User } from '../types.ts';
-// import apiService from '../services/apiService.ts'; // Backend connection disabled
+import apiService from '../services/apiService.ts';
 
 // The User type from backend might be slightly different.
 // The backend returns this from /profile
@@ -30,42 +30,6 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-// --- MOCK DATA FOR DEMO MODE ---
-const getTodayDateString = () => new Date().toISOString().split('T')[0];
-
-const MOCK_ADMIN_USER: UserProfile = {
-    id: 'admin-user-001',
-    name: 'Admin User',
-    email: 'admin@examredi.com',
-    subscription: 'pro',
-    aiCredits: 999,
-    dailyMessageCount: 0,
-    lastMessageDate: getTodayDateString(),
-    role: 'admin',
-};
-
-const MOCK_PRO_USER: UserProfile = {
-    id: 'pro-user-123',
-    name: 'Pro User',
-    email: 'pro@examredi.com',
-    subscription: 'pro',
-    aiCredits: 10,
-    dailyMessageCount: 0,
-    lastMessageDate: getTodayDateString(),
-    role: 'user',
-};
-
-const MOCK_FREE_USER: UserProfile = {
-    id: 'free-user-456',
-    name: 'Free User',
-    email: 'free@examredi.com',
-    subscription: 'free',
-    aiCredits: 0,
-    dailyMessageCount: 0,
-    lastMessageDate: getTodayDateString(),
-    role: 'user',
-};
-
 
 export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
     const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -76,89 +40,92 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     const [isLoading, setIsLoading] = useState(true);
     const navigate = useNavigate();
 
-    // Check for persisted user in localStorage on initial load
-    useEffect(() => {
-        setIsLoading(true);
+    const fetchUserProfile = async () => {
         try {
-            const savedUser = localStorage.getItem('examRediUser');
-            if (savedUser) {
-                const parsedUser: UserProfile = JSON.parse(savedUser);
-                setUser(parsedUser);
-                setIsAuthenticated(true);
-            }
+            const profile = await apiService<UserProfile>('/auth/profile');
+            setUser(profile);
+            setIsAuthenticated(true);
+            localStorage.setItem('examRediUser', JSON.stringify(profile));
+            return profile;
         } catch (error) {
-            console.error("Failed to parse user from localStorage", error);
-            localStorage.removeItem('examRediUser');
-        } finally {
-            setIsLoading(false);
+            console.error("Failed to fetch user profile, logging out.", error);
+            await logout();
+            return null;
         }
+    };
+
+    // Check for persisted user token on initial load
+    useEffect(() => {
+        const checkAuth = async () => {
+            setIsLoading(true);
+            const token = localStorage.getItem('authToken');
+            const refreshToken = localStorage.getItem('refreshToken');
+
+            if (token && refreshToken) {
+                await fetchUserProfile();
+            }
+            
+            setIsLoading(false);
+        };
+        checkAuth();
     }, []);
+
+    const handleAuthSuccess = (data: any, navigatePath = '/dashboard') => {
+        const { accessToken, refreshToken, ...userData } = data;
+        
+        setUser(userData);
+        setIsAuthenticated(true);
+        
+        localStorage.setItem('examRediUser', JSON.stringify(userData));
+        localStorage.setItem('authToken', accessToken);
+        localStorage.setItem('refreshToken', refreshToken);
+        
+        setIsAuthModalOpen(false);
+        setIsLoading(false);
+        
+        if (userData.role === 'admin') {
+            navigate('/admin/dashboard');
+        } else {
+            navigate(navigatePath);
+        }
+    };
 
     const login = async (details: AuthDetails) => {
         setIsLoading(true);
-        // Simulate network delay
-        await new Promise(res => setTimeout(res, 500));
-        
-        let userToLogin: UserProfile;
-        
-        const email = details.email.toLowerCase();
-
-        if (email === MOCK_ADMIN_USER.email) {
-            userToLogin = MOCK_ADMIN_USER;
-        } else if (email === MOCK_PRO_USER.email) {
-            userToLogin = MOCK_PRO_USER;
-        } else {
-            // For any other email, log in as a generic free user
-            userToLogin = {
-                ...MOCK_FREE_USER,
-                id: `user-${Date.now()}`,
-                name: 'Student', // A generic name
-                email: details.email,
-            };
-        }
-        
-        setUser(userToLogin);
-        setIsAuthenticated(true);
-        localStorage.setItem('examRediUser', JSON.stringify(userToLogin));
-        setIsAuthModalOpen(false);
-        setIsLoading(false);
-
-        if (userToLogin.role === 'admin') {
-            navigate('/admin/dashboard');
-        } else {
-            navigate('/dashboard');
-        }
+        const data = await apiService('/auth/login', {
+            method: 'POST',
+            body: details,
+            useAuth: false,
+        });
+        handleAuthSuccess(data);
     };
 
     const register = async (details: AuthDetails) => {
         setIsLoading(true);
-        // Simulate network delay
-        await new Promise(res => setTimeout(res, 500));
-
-        const newUser: UserProfile = {
-            id: `user-${Date.now()}`,
-            name: details.name || 'New User',
-            email: details.email,
-            subscription: 'free',
-            aiCredits: 0,
-            dailyMessageCount: 0,
-            lastMessageDate: getTodayDateString(),
-            role: 'user',
-        };
-
-        setUser(newUser);
-        setIsAuthenticated(true);
-        localStorage.setItem('examRediUser', JSON.stringify(newUser));
-        setIsAuthModalOpen(false);
-        setIsLoading(false);
-        navigate('/dashboard');
+        const data = await apiService('/auth/register', {
+            method: 'POST',
+            body: details,
+            useAuth: false,
+        });
+        handleAuthSuccess(data);
     };
 
-    const logout = () => {
-        localStorage.removeItem('examRediUser');
-        setIsAuthenticated(false);
-        setUser(null);
-        navigate('/dashboard');
+    const logout = async () => {
+        try {
+            // Invalidate the refresh token on the backend
+            await apiService('/auth/logout', {
+                method: 'POST',
+            });
+        } catch (error) {
+            console.error("Logout failed on backend, clearing client session anyway.", error);
+        } finally {
+            localStorage.removeItem('examRediUser');
+            localStorage.removeItem('authToken');
+            localStorage.removeItem('refreshToken');
+            setIsAuthenticated(false);
+            setUser(null);
+            navigate('/dashboard');
+        }
     };
     
     const requestLogin = () => {
@@ -170,20 +137,27 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         setIsUpgradeModalOpen(true);
     };
     
-    const upgradeToPro = () => {
+    const upgradeToPro = async () => {
         if (user) {
-            const upgradedUser = {
-                ...user,
-                subscription: 'pro' as const,
-                aiCredits: 10, // Award credits on upgrade
-            };
-            setUser(upgradedUser);
-            localStorage.setItem('examRediUser', JSON.stringify(upgradedUser));
-            setIsUpgradeModalOpen(false);
+            try {
+                // In a real app, this would trigger a payment flow.
+                // Here we just update the user's status on the backend.
+                const updatedUser = await apiService<UserProfile>(`/admin/users/${user.id}/subscription`, {
+                    method: 'PUT',
+                    body: { subscription: 'pro' }
+                });
+                setUser(updatedUser);
+                localStorage.setItem('examRediUser', JSON.stringify(updatedUser));
+                setIsUpgradeModalOpen(false);
+            } catch (error) {
+                 console.error("Failed to upgrade user:", error);
+                 alert("Could not complete upgrade. Please try again.");
+            }
         }
     };
 
     const updateUser = async (details: Partial<UserProfile>) => {
+        // This is a local-only update for now as there's no backend endpoint for it.
         if (user) {
             const updatedUser = { ...user, ...details };
             setUser(updatedUser);
@@ -192,39 +166,22 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     };
 
     const useAiCredit = async () => {
-        if (user && user.subscription === 'pro' && user.aiCredits > 0) {
-            const updatedUser = { ...user, aiCredits: user.aiCredits - 1 };
-            setUser(updatedUser);
-            localStorage.setItem('examRediUser', JSON.stringify(updatedUser));
-        }
+        // Credit usage is handled on the backend during the API call.
+        // We refetch the profile to get the latest credit count.
+        await fetchUserProfile();
     };
     
     const incrementMessageCount = async (): Promise<{ success: boolean; remaining: number }> => {
-        if (!user) return { success: false, remaining: 0 };
-        if (user.subscription === 'pro') return { success: true, remaining: Infinity };
-
-        const today = getTodayDateString();
-        let currentCount = user.dailyMessageCount;
+        // Message count is handled on the backend. We refetch the profile.
+        const updatedProfile = await fetchUserProfile();
+        if(!updatedProfile) return { success: false, remaining: 0 };
         
-        // Reset count if it's a new day
-        if (user.lastMessageDate !== today) {
-            currentCount = 0;
-        }
-
+        if (updatedProfile.subscription === 'pro') return { success: true, remaining: Infinity };
+        
         const FREE_TIER_MESSAGES = 5;
-        if (currentCount >= FREE_TIER_MESSAGES) {
-            return { success: false, remaining: 0 };
-        }
-
-        const updatedUser = { 
-            ...user, 
-            dailyMessageCount: currentCount + 1,
-            lastMessageDate: today 
-        };
-        setUser(updatedUser);
-        localStorage.setItem('examRediUser', JSON.stringify(updatedUser));
-
-        return { success: true, remaining: FREE_TIER_MESSAGES - (currentCount + 1) };
+        const remaining = FREE_TIER_MESSAGES - updatedProfile.dailyMessageCount;
+        
+        return { success: remaining > 0, remaining };
     };
 
     const value = { isAuthenticated, user, login, register, logout, requestLogin, requestUpgrade, upgradeToPro, updateUser, useAiCredit, incrementMessageCount, isLoading };

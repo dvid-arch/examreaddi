@@ -4,7 +4,6 @@ import { LeaderboardScore, ChallengeQuestion, PastPaper } from '../types.ts';
 import MarkdownRenderer from '../components/MarkdownRenderer.tsx';
 import QuestionRenderer from '../components/QuestionRenderer.tsx';
 import { useAuth } from '../contexts/AuthContext.tsx';
-import { API_BASE_URL } from '../config.ts';
 import apiService from '../services/apiService.ts';
 
 
@@ -12,7 +11,6 @@ import apiService from '../services/apiService.ts';
 const TrophyIcon = () => <svg xmlns="http://www.w3.org/2000/svg" className="h-10 w-10 text-yellow-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M9 11l3-3m0 0l3 3m-3-3v8m0-13a9 9 0 110 18 9 9 0 010-18z" /><path strokeLinecap="round" strokeLinejoin="round" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2h-2m-4-4h2a2 2 0 012 2v4a2 2 0 01-2 2h-2m-4 4H5a2 2 0 01-2-2v-4a2 2 0 012-2h2" /></svg>;
 const ClockIcon = () => <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>;
 const BackArrowIcon = () => <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" /></svg>;
-const PlayAgainIcon = () => <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>;
 
 // --- CONSTANTS ---
 const CHALLENGE_DURATION_MINUTES = 30;
@@ -64,12 +62,10 @@ const UtmeChallenge: React.FC = () => {
         const fetchData = async () => {
             setIsLoadingData(true);
             try {
-                const [leaderboardRes, papersRes] = await Promise.all([
-                    fetch(`${API_BASE_URL}/data/leaderboard`),
-                    fetch(`${API_BASE_URL}/data/papers`)
+                const [leaderboardData, papersData] = await Promise.all([
+                    apiService<LeaderboardScore[]>('/data/leaderboard'),
+                    apiService<PastPaper[]>('/data/papers')
                 ]);
-                const leaderboardData = await leaderboardRes.json();
-                const papersData = await papersRes.json();
                 setLeaderboard(leaderboardData);
                 setAllPapers(papersData);
             } catch (error) {
@@ -173,7 +169,6 @@ const UtmeChallenge: React.FC = () => {
         };
 
         try {
-            // FIX: Changed from apiService.post to the correct apiService call format.
             const updatedLeaderboard = await apiService<LeaderboardScore[]>('/data/leaderboard', { method: 'POST', body: newScore });
             setLeaderboard(updatedLeaderboard);
             setScoreSaved(true);

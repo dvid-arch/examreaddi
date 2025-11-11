@@ -1,31 +1,24 @@
-
-import { Request, Response } from 'express';
-import fs from 'fs/promises';
-import path from 'path';
-import { fileURLToPath } from 'url';
-import { User, PastPaper, StudyGuide } from '../types.ts';
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+const fs = require('fs/promises');
+const path = require('path');
 
 const dbPath = path.join(__dirname, '..', 'db');
 const usersFilePath = path.join(dbPath, 'users.json');
 const papersFilePath = path.join(dbPath, 'papers.json');
 const guidesFilePath = path.join(dbPath, 'guides.json');
 
-const readUsers = async (): Promise<User[]> => {
+const readUsers = async () => {
     try {
         const data = await fs.readFile(usersFilePath, 'utf-8');
         return JSON.parse(data);
     } catch (error) { return []; }
 };
 
-const writeUsers = async (users: User[]) => {
+const writeUsers = async (users) => {
     await fs.mkdir(dbPath, { recursive: true });
     await fs.writeFile(usersFilePath, JSON.stringify(users, null, 2));
 };
 
-const readJsonFile = async (filePath: string) => {
+const readJsonFile = async (filePath) => {
     try {
         const data = await fs.readFile(filePath, 'utf-8');
         return JSON.parse(data);
@@ -36,7 +29,7 @@ const readJsonFile = async (filePath: string) => {
 
 // @desc    Get all users
 // @route   GET /api/admin/users
-export const getUsers = async (req: Request, res: Response) => {
+const getUsers = async (req, res) => {
     const users = await readUsers();
     // Don't send password hashes to the client
     const safeUsers = users.map(({ passwordHash, ...user }) => user);
@@ -45,7 +38,7 @@ export const getUsers = async (req: Request, res: Response) => {
 
 // @desc    Update user subscription
 // @route   PUT /api/admin/users/:id/subscription
-export const updateUserSubscription = async (req: Request, res: Response) => {
+const updateUserSubscription = async (req, res) => {
     const { id } = req.params;
     const { subscription } = req.body;
 
@@ -83,11 +76,11 @@ export const updateUserSubscription = async (req: Request, res: Response) => {
 
 // @desc    Get admin dashboard stats
 // @route   GET /api/admin/stats
-export const getAdminStats = async (req: Request, res: Response) => {
+const getAdminStats = async (req, res) => {
     try {
         const users = await readUsers();
-        const papers: PastPaper[] = await readJsonFile(papersFilePath);
-        const guides: StudyGuide[] = await readJsonFile(guidesFilePath);
+        const papers = await readJsonFile(papersFilePath);
+        const guides = await readJsonFile(guidesFilePath);
 
         const totalQuestions = papers.reduce((acc, paper) => acc + paper.questions.length, 0);
 
@@ -104,9 +97,9 @@ export const getAdminStats = async (req: Request, res: Response) => {
 
 // @desc    Delete a past paper
 // @route   DELETE /api/admin/papers/:id
-export const deletePaper = async (req: Request, res: Response) => {
+const deletePaper = async (req, res) => {
     const { id } = req.params;
-    const papers: PastPaper[] = await readJsonFile(papersFilePath);
+    const papers = await readJsonFile(papersFilePath);
     const updatedPapers = papers.filter(p => p.id !== id);
 
     if (papers.length === updatedPapers.length) {
@@ -123,9 +116,9 @@ export const deletePaper = async (req: Request, res: Response) => {
 
 // @desc    Delete a study guide
 // @route   DELETE /api/admin/guides/:id
-export const deleteGuide = async (req: Request, res: Response) => {
+const deleteGuide = async (req, res) => {
     const { id } = req.params;
-    const guides: StudyGuide[] = await readJsonFile(guidesFilePath);
+    const guides = await readJsonFile(guidesFilePath);
     const updatedGuides = guides.filter(g => g.id !== id);
 
     if (guides.length === updatedGuides.length) {
@@ -139,3 +132,5 @@ export const deleteGuide = async (req: Request, res: Response) => {
         res.status(500).json({ message: 'Error writing to database' });
     }
 };
+
+module.exports = { getUsers, updateUserSubscription, getAdminStats, deletePaper, deleteGuide };

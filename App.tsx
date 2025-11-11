@@ -89,7 +89,7 @@ const App: React.FC = () => {
               </Route>
 
               {/* Fullscreen route still needs to be separate */}
-              <Route path="/take-examination" element={<TakeExamination />} />
+              <Route path="/take-examination" element={<ProtectedRoute><TakeExamination /></ProtectedRoute>} />
 
               {/* Redirect any other path */}
               <Route path="*" element={<Navigate to="/dashboard" replace />} />

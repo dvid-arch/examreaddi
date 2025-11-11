@@ -4,11 +4,9 @@ import jwt from 'jsonwebtoken';
 import bcrypt from 'bcryptjs';
 import fs from 'fs/promises';
 import path from 'path';
-// FIX: Resolve `Cannot find name '__dirname'` error by defining `__dirname` for ES modules.
 import { fileURLToPath } from 'url';
 import { User, AuthenticatedRequest } from '../types.ts';
 
-// FIX: Resolve `Cannot find name '__dirname'` error by defining `__dirname` for ES modules.
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
@@ -40,13 +38,10 @@ const getTodayDateString = () => new Date().toISOString().split('T')[0];
 
 // @desc    Register a new user
 // @route   POST /api/auth/register
-// FIX: Use express.Request and express.Response for correct types.
 export const registerUser = async (req: Request, res: Response) => {
-    // FIX: Correctly typed `req` now has `body`.
     const { name, email, password } = req.body;
 
     if (!name || !email || !password) {
-        // FIX: Correctly typed `res` now has `status` and `json`.
         return res.status(400).json({ message: 'Please add all fields' });
     }
 
@@ -54,7 +49,6 @@ export const registerUser = async (req: Request, res: Response) => {
     const userExists = users.find(u => u.email === email);
 
     if (userExists) {
-        // FIX: Correctly typed `res` now has `status` and `json`.
         return res.status(400).json({ message: 'User already exists' });
     }
 
@@ -76,7 +70,6 @@ export const registerUser = async (req: Request, res: Response) => {
     users.push(newUser);
     await writeUsers(users);
 
-    // FIX: Correctly typed `res` now has `status` and `json`.
     res.status(201).json({
         id: newUser.id,
         name: newUser.name,
@@ -89,15 +82,12 @@ export const registerUser = async (req: Request, res: Response) => {
 
 // @desc    Authenticate a user
 // @route   POST /api/auth/login
-// FIX: Use express.Request and express.Response for correct types.
 export const loginUser = async (req: Request, res: Response) => {
-    // FIX: Correctly typed `req` now has `body`.
     const { email, password } = req.body;
     const users = await readUsers();
     const user = users.find(u => u.email === email.toLowerCase());
 
     if (user && (await bcrypt.compare(password, user.passwordHash))) {
-        // FIX: Correctly typed `res` now has `json`.
         res.json({
             id: user.id,
             name: user.name,
@@ -107,7 +97,6 @@ export const loginUser = async (req: Request, res: Response) => {
             token: generateToken(user.id, user.email),
         });
     } else {
-        // FIX: Correctly typed `res` now has `status` and `json`.
         res.status(400).json({ message: 'Invalid credentials' });
     }
 };
@@ -115,7 +104,6 @@ export const loginUser = async (req: Request, res: Response) => {
 
 // @desc    Get user profile data
 // @route   GET /api/auth/profile
-// FIX: Use express.Response for correct types.
 export const getUserProfile = async (req: AuthenticatedRequest, res: Response) => {
     const users = await readUsers();
     const user = users.find(u => u.id === req.user?.id);
@@ -129,7 +117,6 @@ export const getUserProfile = async (req: AuthenticatedRequest, res: Response) =
             await writeUsers(users);
         }
 
-        // FIX: Correctly typed `res` now has `json`.
         res.json({
             id: user.id,
             name: user.name,
@@ -141,7 +128,6 @@ export const getUserProfile = async (req: AuthenticatedRequest, res: Response) =
             lastMessageDate: user.lastMessageDate
         });
     } else {
-        // FIX: Correctly typed `res` now has `status` and `json`.
         res.status(404).json({ message: 'User not found' });
     }
 };

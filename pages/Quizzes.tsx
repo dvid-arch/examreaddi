@@ -2,7 +2,7 @@ import React, { useState, useMemo, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Card from '../components/Card.tsx';
 import { PastPaper } from '../types.ts';
-import { API_BASE_URL } from '../config.ts';
+import apiService from '../services/apiService.ts';
 
 
 const Quizzes: React.FC = () => {
@@ -14,9 +14,7 @@ const Quizzes: React.FC = () => {
     useEffect(() => {
         const fetchPapers = async () => {
             try {
-                const response = await fetch(`${API_BASE_URL}/data/papers`);
-                if (!response.ok) throw new Error('Failed to fetch papers');
-                const data: PastPaper[] = await response.json();
+                const data: PastPaper[] = await apiService('/data/papers');
                 setAllPapers(data);
             } catch (error) {
                 console.error(error);
@@ -37,7 +35,7 @@ const Quizzes: React.FC = () => {
 
     // State for Standard Mode
     const [selectedSubjects, setSelectedSubjects] = useState<string[]>(['English']);
-    const [standardSelectedYear, setStandardSelectedYear] = useState<'random' | number>(availableYears[0] ?? 'random');
+    const [standardSelectedYear, setStandardSelectedYear] = useState<'random' | number>('random');
      useEffect(() => {
         if (availableYears.length > 0) {
             setStandardSelectedYear(availableYears[0]);

@@ -64,7 +64,6 @@ export interface User {
 }
 
 // Extending Express Request type to include authenticated user
-// FIX: Use express.Request to avoid conflict with browser/DOM Request type.
 export type AuthenticatedRequest = Request & {
     user?: {
         id: string;

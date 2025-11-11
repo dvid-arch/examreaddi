@@ -202,8 +202,8 @@ const Performance: React.FC = () => {
                             </tr>
                         </thead>
                         <tbody>
-                            {results.map(result => (
-                                <tr key={result.id} className="border-b dark:border-slate-700 last:border-b-0 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">
+                            {results.sort((a, b) => b.completedAt - a.completedAt).map(result => (
+                                <tr key={result.completedAt} className="border-b dark:border-slate-700 last:border-b-0 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">
                                     <td className="p-4 text-slate-700 dark:text-slate-300">{new Date(result.completedAt).toLocaleDateString()}</td>
                                     <td className="p-4 font-medium text-slate-800 dark:text-slate-200 break-words">{result.subject}</td>
                                     <td className="p-4 text-slate-700 dark:text-slate-300 break-words">{result.exam}</td>

@@ -1,15 +1,12 @@
+const jwt = require('jsonwebtoken');
 
-import { Response, NextFunction } from 'express';
-import jwt from 'jsonwebtoken';
-import { AuthenticatedRequest } from '../types.ts';
-
-export const protect = (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
+const protect = (req, res, next) => {
     let token;
 
     if (req.headers.authorization && req.headers.authorization.startsWith('Bearer')) {
         try {
             token = req.headers.authorization.split(' ')[1];
-            const decoded = jwt.verify(token, process.env.JWT_SECRET!) as { id: string, email: string };
+            const decoded = jwt.verify(token, process.env.JWT_SECRET);
             
             // We attach a simplified user object to the request.
             // For a full app, you might fetch the full user from the DB here.
@@ -26,3 +23,5 @@ export const protect = (req: AuthenticatedRequest, res: Response, next: NextFunc
         res.status(401).json({ message: 'Not authorized, no token' });
     }
 };
+
+module.exports = { protect };
