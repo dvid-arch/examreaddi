@@ -192,7 +192,7 @@ const Performance: React.FC = () => {
              <Card>
                 <h2 className="text-xl font-bold text-slate-800 dark:text-slate-50 mb-4">Quiz History</h2>
                 <div className="overflow-x-auto border border-gray-200 dark:border-slate-700 rounded-lg">
-                    <table className="w-full text-left text-sm">
+                    <table className="min-w-full text-left text-sm">
                         <thead className="bg-gray-50 dark:bg-slate-800">
                             <tr>
                                 <th scope="col" className="p-4 font-semibold text-slate-600 dark:text-slate-400">Date</th>
@@ -205,8 +205,8 @@ const Performance: React.FC = () => {
                             {results.map(result => (
                                 <tr key={result.id} className="border-b dark:border-slate-700 last:border-b-0 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">
                                     <td className="p-4 text-slate-700 dark:text-slate-300">{new Date(result.completedAt).toLocaleDateString()}</td>
-                                    <td className="p-4 font-medium text-slate-800 dark:text-slate-200">{result.subject}</td>
-                                    <td className="p-4 text-slate-700 dark:text-slate-300">{result.exam}</td>
+                                    <td className="p-4 font-medium text-slate-800 dark:text-slate-200 break-words">{result.subject}</td>
+                                    <td className="p-4 text-slate-700 dark:text-slate-300 break-words">{result.exam}</td>
                                     <td className="p-4 font-medium text-primary">{result.score}/{result.totalQuestions} ({Math.round(result.score / result.totalQuestions * 100)}%)</td>
                                 </tr>
                             ))}

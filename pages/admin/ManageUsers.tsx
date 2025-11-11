@@ -136,33 +136,33 @@ const ManageUsers: React.FC = () => {
                 </button>
             </div>
             <Card>
-                 <div className="overflow-x-auto">
-                    <table className="w-full text-left text-sm">
+                 <div className="overflow-x-auto border border-gray-200 dark:border-slate-700 rounded-lg">
+                    <table className="min-w-full text-left text-sm">
                         <thead className="bg-slate-50 dark:bg-slate-800">
                             <tr>
-                                <th className="p-4 font-semibold text-slate-600 dark:text-slate-300">Name</th>
-                                <th className="p-4 font-semibold text-slate-600 dark:text-slate-300">Email</th>
-                                <th className="p-4 font-semibold text-slate-600 dark:text-slate-300">Role</th>
-                                <th className="p-4 font-semibold text-slate-600 dark:text-slate-300 text-center">Pro Access</th>
-                                <th className="p-4 font-semibold text-slate-600 dark:text-slate-300">Actions</th>
+                                <th className="px-2 py-4 sm:px-4 font-semibold text-slate-600 dark:text-slate-300">Name</th>
+                                <th className="px-2 py-4 sm:px-4 font-semibold text-slate-600 dark:text-slate-300">Email</th>
+                                <th className="px-2 py-4 sm:px-4 font-semibold text-slate-600 dark:text-slate-300">Role</th>
+                                <th className="px-2 py-4 sm:px-4 font-semibold text-slate-600 dark:text-slate-300 text-center">Pro<span className="hidden sm:inline"> Access</span></th>
+                                <th className="px-2 py-4 sm:px-4 font-semibold text-slate-600 dark:text-slate-300">Actions</th>
                             </tr>
                         </thead>
                         <tbody>
                             {isLoading ? (
                                 <tr><td colSpan={5} className="text-center p-8 text-slate-500 dark:text-slate-400">Loading users...</td></tr>
                             ) : error ? (
-                                <tr><td colSpan={5} className="text-center p-8 text-red-500">{error}</td></tr>
+                                <tr><td colSpan={5} className="p-8 text-center text-red-500">{error}</td></tr>
                             ) : (
                                 users.map(user => (
                                     <tr key={user.id} className="border-b dark:border-slate-700 last:border-b-0">
-                                        <td className="p-4 font-medium text-slate-800 dark:text-slate-100">{user.name}</td>
-                                        <td className="p-4 text-slate-600 dark:text-slate-300">{user.email}</td>
-                                        <td className="p-4">
+                                        <td className="px-2 py-4 sm:px-4 font-medium text-slate-800 dark:text-slate-100 break-words">{user.name}</td>
+                                        <td className="px-2 py-4 sm:px-4 text-slate-600 dark:text-slate-300 break-all">{user.email}</td>
+                                        <td className="px-2 py-4 sm:px-4">
                                             <span className={`px-2 py-1 text-xs font-semibold rounded-full ${user.role === 'admin' ? 'bg-red-100 text-red-800 dark:bg-red-500/20 dark:text-red-300' : 'bg-slate-100 text-slate-800 dark:bg-slate-700 dark:text-slate-200'}`}>
                                                 {user.role}
                                             </span>
                                         </td>
-                                        <td className="p-4 text-center">
+                                        <td className="px-2 py-4 sm:px-4 text-center">
                                             {user.role !== 'admin' ? (
                                                 <label htmlFor={`pro-toggle-${user.id}`} className="relative inline-flex items-center cursor-pointer">
                                                   <input 
@@ -178,7 +178,7 @@ const ManageUsers: React.FC = () => {
                                                 <span className="text-sm font-semibold text-slate-500 dark:text-slate-400">-</span>
                                             )}
                                         </td>
-                                         <td className="p-4 flex gap-2">
+                                         <td className="px-2 py-4 sm:px-4 flex flex-col items-start gap-1 sm:flex-row sm:gap-2">
                                             <button onClick={() => openModal(user)} className="font-semibold text-blue-600 dark:text-blue-400 hover:underline">Edit</button>
                                             {user.role !== 'admin' && (
                                                 <button onClick={() => handleDeleteUser(user.id)} className="font-semibold text-red-600 dark:text-red-400 hover:underline">Delete</button>

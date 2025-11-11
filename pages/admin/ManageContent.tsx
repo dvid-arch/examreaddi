@@ -240,6 +240,22 @@ const ManageQuestionsModal: React.FC<ManageQuestionsProps> = ({ paper, onClose, 
                                             className="font-semibold text-slate-700 dark:text-slate-300"
                                             imageClassName="max-w-sm"
                                         />
+                                        <div className="mt-2 pl-5 space-y-1">
+                                            {/* FIX: Use Object.keys to iterate over options to ensure correct type inference for `option`. */}
+                                            {Object.keys(q.options).map((key) => {
+                                                const option = q.options[key];
+                                                const isCorrect = key === q.answer;
+                                                return (
+                                                    <div key={key} className={`text-sm flex items-start gap-2 p-2 rounded ${isCorrect ? 'bg-green-100 dark:bg-green-500/20' : ''}`}>
+                                                        <span className={`font-bold ${isCorrect ? 'text-green-800 dark:text-green-300' : 'text-slate-600 dark:text-slate-400'}`}>{key}.</span>
+                                                        <div className={isCorrect ? 'text-green-800 dark:text-green-200' : 'text-slate-700 dark:text-slate-300'}>
+                                                            <p>{option.text}</p>
+                                                            {option.diagram && <img src={option.diagram} alt={`Option ${key}`} className="mt-1 max-w-[150px] h-auto rounded border dark:border-slate-600" />}
+                                                        </div>
+                                                    </div>
+                                                );
+                                            })}
+                                        </div>
                                     </div>
                                 </div>
                             </div>
@@ -476,8 +492,8 @@ const ManagePapers: React.FC<ManagePapersProps> = ({ papers, isLoading, onAdd, o
                 <h2 className="text-xl font-bold text-slate-800 dark:text-white">Past Papers ({papers.length})</h2>
                 <button onClick={onAdd} className="bg-primary text-white font-bold py-2 px-4 rounded-lg hover:bg-accent w-full md:w-auto">Add New Paper</button>
             </div>
-             <div className="overflow-x-auto">
-                <table className="w-full text-left text-sm">
+             <div className="overflow-x-auto border border-gray-200 dark:border-slate-700 rounded-lg">
+                <table className="min-w-full text-left text-sm">
                     <thead className="bg-slate-50 dark:bg-slate-800">
                         <tr>
                             <th className="p-4 font-semibold text-slate-600 dark:text-slate-300">Subject</th>
@@ -493,7 +509,7 @@ const ManagePapers: React.FC<ManagePapersProps> = ({ papers, isLoading, onAdd, o
                         ) : (
                             papers.map(paper => (
                                 <tr key={paper.id} className="border-b dark:border-slate-700 last:border-b-0">
-                                    <td className="p-4 font-medium text-slate-800 dark:text-slate-100">{paper.subject}</td>
+                                    <td className="p-4 font-medium text-slate-800 dark:text-slate-100 break-words">{paper.subject}</td>
                                     <td className="p-4 text-slate-600 dark:text-slate-300">{paper.exam}</td>
                                     <td className="p-4 text-slate-600 dark:text-slate-300">{paper.year}</td>
                                     <td className="p-4 text-slate-600 dark:text-slate-300">{paper.questions.length}</td>
@@ -526,8 +542,8 @@ const ManageGuides: React.FC<ManageGuidesProps> = ({ guides, isLoading, onAdd, o
                 <h2 className="text-xl font-bold text-slate-800 dark:text-white">Study Guides ({guides.length})</h2>
                 <button onClick={onAdd} className="bg-primary text-white font-bold py-2 px-4 rounded-lg hover:bg-accent w-full md:w-auto">Add New Guide</button>
             </div>
-             <div className="overflow-x-auto">
-                <table className="w-full text-left text-sm">
+             <div className="overflow-x-auto border border-gray-200 dark:border-slate-700 rounded-lg">
+                <table className="min-w-full text-left text-sm">
                     <thead className="bg-slate-50 dark:bg-slate-800">
                         <tr>
                             <th className="p-4 font-semibold text-slate-600 dark:text-slate-300">Title</th>
@@ -542,8 +558,8 @@ const ManageGuides: React.FC<ManageGuidesProps> = ({ guides, isLoading, onAdd, o
                         ) : (
                             guides.map(guide => (
                                 <tr key={guide.id} className="border-b dark:border-slate-700 last:border-b-0">
-                                    <td className="p-4 font-medium text-slate-800 dark:text-slate-100">{guide.title}</td>
-                                    <td className="p-4 text-slate-600 dark:text-slate-300">{guide.subject}</td>
+                                    <td className="p-4 font-medium text-slate-800 dark:text-slate-100 break-words">{guide.title}</td>
+                                    <td className="p-4 text-slate-600 dark:text-slate-300 break-words">{guide.subject}</td>
                                     <td className="p-4 text-slate-600 dark:text-slate-300">{guide.createdAt}</td>
                                     <td className="p-4 flex gap-4">
                                         <button onClick={() => onEdit(guide)} className="font-semibold text-blue-600 dark:text-blue-400 hover:underline">Edit</button>
