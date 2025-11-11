@@ -144,7 +144,7 @@ const Dashboard: React.FC = () => {
 
             <div>
                  <h2 className="text-2xl font-bold text-slate-800 dark:text-white mb-4">Explore Your Tools</h2>
-                 <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
+                 <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
                     {tiles.map((tile) => (
                         <DashboardTile key={tile.title} {...tile} />
                     ))}

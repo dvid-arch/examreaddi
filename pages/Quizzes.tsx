@@ -160,7 +160,7 @@ const Quizzes: React.FC = () => {
                         <Card>
                             <h2 className="text-xl font-bold text-slate-800 dark:text-slate-50">Choose Your Subjects ({selectedSubjects.length}/4)</h2>
                             <p className="text-slate-500 dark:text-slate-400 text-sm mb-4">English is compulsory. Please select 3 other subjects.</p>
-                            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
                                 {subjects.map(subject => (
                                     <label 
                                         key={subject} 
@@ -213,7 +213,7 @@ const Quizzes: React.FC = () => {
                                 
                                 <div>
                                     <h3 className="text-md font-semibold text-slate-700 dark:text-slate-300 mb-2">1. Select Subjects & Years</h3>
-                                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
                                         {subjects.map(subject => (
                                             <div key={subject} className={`p-3 border rounded-lg transition-colors ${customSelections[subject] ? 'bg-primary-light dark:bg-primary/20 border-primary' : 'bg-white dark:bg-gray-800/50'}`}>
                                                 <label className="flex items-center space-x-3 cursor-pointer">

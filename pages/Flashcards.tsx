@@ -496,7 +496,7 @@ const Flashcards: React.FC = () => {
             {isDeckFormVisible && <DeckForm onSave={handleSaveDeck} onCancel={() => setDeckFormVisible(false)} />}
             {isReminderModalVisible && <ReminderModal decks={decks} onSave={handleSetReminder} onCancel={() => setReminderModalVisible(false)} />}
             
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
                 {decks.map((deck) => (
                     <div key={deck.id} onClick={() => setSelectedDeck(deck)} className="bg-white dark:bg-gray-800 p-4 rounded-lg border border-gray-200 dark:border-slate-700 shadow-sm hover:shadow-lg hover:-translate-y-1 transition-all duration-300 cursor-pointer flex flex-col">
                         <h3 className="font-bold text-lg text-slate-800 dark:text-slate-50">{deck.name}</h3>
