@@ -1,4 +1,5 @@
-import express from 'express';
+
+import { Request } from 'express';
 
 // Replicating frontend types for consistency
 export interface PastQuestionOption {
@@ -64,7 +65,7 @@ export interface User {
 
 // Extending Express Request type to include authenticated user
 // FIX: Use express.Request to avoid conflict with browser/DOM Request type.
-export type AuthenticatedRequest = express.Request & {
+export type AuthenticatedRequest = Request & {
     user?: {
         id: string;
         email: string;

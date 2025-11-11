@@ -1,7 +1,14 @@
-import express from 'express';
+
+import { Request, Response } from 'express';
 import fs from 'fs/promises';
 import path from 'path';
+// FIX: Resolve `Cannot find name '__dirname'` error by defining `__dirname` for ES modules.
+import { fileURLToPath } from 'url';
 import { AuthenticatedRequest, PastPaper, StudyGuide, LeaderboardScore, QuizResult } from '../types.ts';
+
+// FIX: Resolve `Cannot find name '__dirname'` error by defining `__dirname` for ES modules.
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const dbPath = path.join(__dirname, '..', 'db');
 const papersFilePath = path.join(dbPath, 'papers.json');
@@ -26,7 +33,7 @@ const writeJsonFile = async (filePath: string, data: any) => {
 // @desc    Get past papers
 // @route   GET /api/data/papers
 // FIX: Use express.Request and express.Response for correct types.
-export const getPapers = async (req: express.Request, res: express.Response) => {
+export const getPapers = async (req: Request, res: Response) => {
     // FIX: Correctly typed `req` now has `query`.
     const { subject, year } = req.query;
     let papers: PastPaper[] = await readJsonFile(papersFilePath);
@@ -45,7 +52,7 @@ export const getPapers = async (req: express.Request, res: express.Response) => 
 // @desc    Get study guides
 // @route   GET /api/data/guides
 // FIX: Use express.Request and express.Response for correct types.
-export const getGuides = async (req: express.Request, res: express.Response) => {
+export const getGuides = async (req: Request, res: Response) => {
     const guides: StudyGuide[] = await readJsonFile(guidesFilePath);
     // FIX: Correctly typed `res` now has `json`.
     res.json(guides);
@@ -54,7 +61,7 @@ export const getGuides = async (req: express.Request, res: express.Response) => 
 // @desc    Get leaderboard
 // @route   GET /api/data/leaderboard
 // FIX: Use express.Request and express.Response for correct types.
-export const getLeaderboard = async (req: express.Request, res: express.Response) => {
+export const getLeaderboard = async (req: Request, res: Response) => {
     const leaderboard: LeaderboardScore[] = await readJsonFile(leaderboardFilePath);
     // FIX: Correctly typed `res` now has `json`.
     res.json(leaderboard.sort((a, b) => b.score - a.score));
@@ -63,7 +70,7 @@ export const getLeaderboard = async (req: express.Request, res: express.Response
 // @desc    Add score to leaderboard
 // @route   POST /api/data/leaderboard
 // FIX: Use express.Response for correct types.
-export const addLeaderboardScore = async (req: AuthenticatedRequest, res: express.Response) => {
+export const addLeaderboardScore = async (req: AuthenticatedRequest, res: Response) => {
     // FIX: Correctly typed `req` now has `body`.
     const newScore: LeaderboardScore = req.body;
     let leaderboard: LeaderboardScore[] = await readJsonFile(leaderboardFilePath);
@@ -83,7 +90,7 @@ export const addLeaderboardScore = async (req: AuthenticatedRequest, res: expres
 // @desc    Get user performance results
 // @route   GET /api/data/performance
 // FIX: Use express.Response for correct types.
-export const getPerformance = async (req: AuthenticatedRequest, res: express.Response) => {
+export const getPerformance = async (req: AuthenticatedRequest, res: Response) => {
     const userId = req.user?.id;
     const allResults: Record<string, QuizResult[]> = await readJsonFile(performanceFilePath);
     const userResults = allResults[userId!] || [];
@@ -94,7 +101,7 @@ export const getPerformance = async (req: AuthenticatedRequest, res: express.Res
 // @desc    Add a performance result
 // @route   POST /api/data/performance
 // FIX: Use express.Response for correct types.
-export const addPerformanceResult = async (req: AuthenticatedRequest, res: express.Response) => {
+export const addPerformanceResult = async (req: AuthenticatedRequest, res: Response) => {
     const userId = req.user?.id;
     // FIX: Correctly typed `req` now has `body`.
     const newResult: QuizResult = req.body;

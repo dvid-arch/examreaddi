@@ -1,8 +1,15 @@
-import express from 'express';
+
+import { Response } from 'express';
 import { AuthenticatedRequest, User } from '../types.ts';
 import { GoogleGenAI, Content } from "@google/genai";
 import fs from 'fs/promises';
 import path from 'path';
+// FIX: Resolve `Cannot find name '__dirname'` error by defining `__dirname` for ES modules.
+import { fileURLToPath } from 'url';
+
+// FIX: Resolve `Cannot find name '__dirname'` error by defining `__dirname` for ES modules.
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const dbPath = path.join(__dirname, '..', 'db');
 const usersFilePath = path.join(dbPath, 'users.json');
@@ -43,7 +50,7 @@ const FREE_TIER_MESSAGES = 5;
 // @desc    Handle AI chat messages
 // @route   POST /api/ai/chat
 // FIX: Use express.Response for correct types.
-export const handleAiChat = async (req: AuthenticatedRequest, res: express.Response) => {
+export const handleAiChat = async (req: AuthenticatedRequest, res: Response) => {
     // FIX: Correctly typed `req` now has `body`.
     const { message, history } = req.body;
     const userId = req.user!.id;
@@ -108,7 +115,7 @@ const handleCreditUsage = async (userId: string, cost: number): Promise<{success
 // @desc    Generate a study guide
 // @route   POST /api/ai/generate-guide
 // FIX: Use express.Response for correct types.
-export const handleGenerateGuide = async (req: AuthenticatedRequest, res: express.Response) => {
+export const handleGenerateGuide = async (req: AuthenticatedRequest, res: Response) => {
     // FIX: Correctly typed `req` now has `body`.
     const { subject, topic } = req.body;
     const creditCheck = await handleCreditUsage(req.user!.id, 1);
@@ -139,7 +146,7 @@ export const handleGenerateGuide = async (req: AuthenticatedRequest, res: expres
 // @desc    Research a topic (course/university)
 // @route   POST /api/ai/research
 // FIX: Use express.Response for correct types.
-export const handleResearch = async (req: AuthenticatedRequest, res: express.Response) => {
+export const handleResearch = async (req: AuthenticatedRequest, res: Response) => {
     // FIX: Correctly typed `req` now has `body`.
     const { searchType, query } = req.body;
     const creditCheck = await handleCreditUsage(req.user!.id, 1);

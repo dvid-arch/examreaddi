@@ -1,4 +1,5 @@
-import express from 'express';
+
+import express, { Request, Response } from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
 import authRoutes from './routes/authRoutes.ts';
@@ -15,7 +16,8 @@ app.use(cors());
 // FIX: The error on this line was likely due to type inference issues caused by conflicting global types. Fixing Request/Response types throughout the app resolves this.
 app.use(express.json());
 
-app.get('/', (req: express.Request, res: express.Response) => {
+// FIX: Add explicit types for req and res to resolve method errors like '.send'.
+app.get('/', (req: Request, res: Response) => {
     // FIX: Use express.Response to get correct method definitions like .send()
     res.send('ExamRedi Backend is running!');
 });

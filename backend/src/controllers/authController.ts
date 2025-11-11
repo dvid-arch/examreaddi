@@ -1,9 +1,16 @@
-import express from 'express';
+
+import { Request, Response } from 'express';
 import jwt from 'jsonwebtoken';
 import bcrypt from 'bcryptjs';
 import fs from 'fs/promises';
 import path from 'path';
+// FIX: Resolve `Cannot find name '__dirname'` error by defining `__dirname` for ES modules.
+import { fileURLToPath } from 'url';
 import { User, AuthenticatedRequest } from '../types.ts';
+
+// FIX: Resolve `Cannot find name '__dirname'` error by defining `__dirname` for ES modules.
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const dbPath = path.join(__dirname, '..', 'db');
 const usersFilePath = path.join(dbPath, 'users.json');
@@ -34,7 +41,7 @@ const getTodayDateString = () => new Date().toISOString().split('T')[0];
 // @desc    Register a new user
 // @route   POST /api/auth/register
 // FIX: Use express.Request and express.Response for correct types.
-export const registerUser = async (req: express.Request, res: express.Response) => {
+export const registerUser = async (req: Request, res: Response) => {
     // FIX: Correctly typed `req` now has `body`.
     const { name, email, password } = req.body;
 
@@ -83,7 +90,7 @@ export const registerUser = async (req: express.Request, res: express.Response) 
 // @desc    Authenticate a user
 // @route   POST /api/auth/login
 // FIX: Use express.Request and express.Response for correct types.
-export const loginUser = async (req: express.Request, res: express.Response) => {
+export const loginUser = async (req: Request, res: Response) => {
     // FIX: Correctly typed `req` now has `body`.
     const { email, password } = req.body;
     const users = await readUsers();
@@ -109,7 +116,7 @@ export const loginUser = async (req: express.Request, res: express.Response) => 
 // @desc    Get user profile data
 // @route   GET /api/auth/profile
 // FIX: Use express.Response for correct types.
-export const getUserProfile = async (req: AuthenticatedRequest, res: express.Response) => {
+export const getUserProfile = async (req: AuthenticatedRequest, res: Response) => {
     const users = await readUsers();
     const user = users.find(u => u.id === req.user?.id);
 

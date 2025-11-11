@@ -1,9 +1,11 @@
-import express, { NextFunction } from 'express';
+
+import { Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
 import { AuthenticatedRequest } from '../types.ts';
 
 // FIX: Use express.Response to specify Express types and avoid conflict with DOM types.
-export const protect = (req: AuthenticatedRequest, res: express.Response, next: NextFunction) => {
+// FIX: Explicitly type res and next to resolve method/property errors.
+export const protect = (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
     let token;
 
     // FIX: Correctly typed `req` via AuthenticatedRequest now has `headers`.

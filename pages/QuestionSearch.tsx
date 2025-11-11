@@ -1,9 +1,9 @@
-
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { useLocation } from 'react-router-dom';
 import Card from '../components/Card.tsx';
 import { PastQuestion, PastPaper } from '../types.ts';
 import MarkdownRenderer from '../components/MarkdownRenderer.tsx';
+import QuestionRenderer from '../components/QuestionRenderer.tsx';
 import { useAuth } from '../contexts/AuthContext.tsx';
 import { API_BASE_URL } from '../config.ts';
 
@@ -179,12 +179,11 @@ const QuestionSearch: React.FC = () => {
                                             {paper.questions.map((q, index) => (
                                                 <div key={q.id} className="p-3 bg-gray-50 dark:bg-slate-700/50 rounded-lg border border-gray-200 dark:border-slate-600">
                                                     <p className="font-semibold text-slate-700 dark:text-slate-300 mb-2">Question {index + 1}</p>
-                                                    <div className="text-slate-800 dark:text-slate-200 mb-2"><MarkdownRenderer content={q.question} /></div>
-                                                    {q.questionDiagram && (
-                                                        <div className="mb-4">
-                                                            <img src={q.questionDiagram} alt="Question diagram" className="max-w-md h-auto rounded-lg border bg-white" />
-                                                        </div>
-                                                    )}
+                                                    <QuestionRenderer
+                                                        question={q}
+                                                        className="text-slate-800 dark:text-slate-200 mb-2"
+                                                        imageClassName="max-w-md"
+                                                    />
                                                     <div className="space-y-2">
                                                         {Object.keys(q.options).map(key => {
                                                             const value = q.options[key];
@@ -268,12 +267,12 @@ const QuestionSearch: React.FC = () => {
                                             <span>Question {index + 1}</span>
                                             <span className="font-semibold">{q.subject} - {q.exam} {q.year}</span>
                                         </div>
-                                        <div className="text-lg text-slate-800 dark:text-slate-200 mb-2"><MarkdownRenderer content={highlightQuery(q.question, query)} /></div>
-                                        {q.questionDiagram && (
-                                            <div className="mb-4">
-                                                <img src={q.questionDiagram} alt="Question diagram" className="max-w-md h-auto rounded-lg border bg-white" />
-                                            </div>
-                                        )}
+                                        <QuestionRenderer
+                                            question={q}
+                                            questionContent={highlightQuery(q.question, query)}
+                                            className="text-lg text-slate-800 dark:text-slate-200 mb-2"
+                                            imageClassName="max-w-md"
+                                        />
                                         <div className="space-y-2">
                                             {Object.keys(q.options).map(key => {
                                                 const value = q.options[key];

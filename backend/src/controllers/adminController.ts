@@ -1,7 +1,14 @@
-import express from 'express';
+
+import { Request, Response } from 'express';
 import fs from 'fs/promises';
 import path from 'path';
+// FIX: Resolve `Cannot find name '__dirname'` error by defining `__dirname` for ES modules.
+import { fileURLToPath } from 'url';
 import { User, PastPaper, StudyGuide } from '../types.ts';
+
+// FIX: Resolve `Cannot find name '__dirname'` error by defining `__dirname` for ES modules.
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const dbPath = path.join(__dirname, '..', 'db');
 const usersFilePath = path.join(dbPath, 'users.json');
@@ -32,7 +39,7 @@ const readJsonFile = async (filePath: string) => {
 // @desc    Get all users
 // @route   GET /api/admin/users
 // FIX: Use express.Request and express.Response for correct types.
-export const getUsers = async (req: express.Request, res: express.Response) => {
+export const getUsers = async (req: Request, res: Response) => {
     const users = await readUsers();
     // Don't send password hashes to the client
     const safeUsers = users.map(({ passwordHash, ...user }) => user);
@@ -43,7 +50,7 @@ export const getUsers = async (req: express.Request, res: express.Response) => {
 // @desc    Update user subscription
 // @route   PUT /api/admin/users/:id/subscription
 // FIX: Use express.Request and express.Response for correct types.
-export const updateUserSubscription = async (req: express.Request, res: express.Response) => {
+export const updateUserSubscription = async (req: Request, res: Response) => {
     // FIX: Correctly typed `req` now has `params` and `body`.
     const { id } = req.params;
     const { subscription } = req.body;
@@ -87,7 +94,7 @@ export const updateUserSubscription = async (req: express.Request, res: express.
 // @desc    Get admin dashboard stats
 // @route   GET /api/admin/stats
 // FIX: Use express.Request and express.Response for correct types.
-export const getAdminStats = async (req: express.Request, res: express.Response) => {
+export const getAdminStats = async (req: Request, res: Response) => {
     try {
         const users = await readUsers();
         const papers: PastPaper[] = await readJsonFile(papersFilePath);
@@ -111,7 +118,7 @@ export const getAdminStats = async (req: express.Request, res: express.Response)
 // @desc    Delete a past paper
 // @route   DELETE /api/admin/papers/:id
 // FIX: Use express.Request and express.Response for correct types.
-export const deletePaper = async (req: express.Request, res: express.Response) => {
+export const deletePaper = async (req: Request, res: Response) => {
     // FIX: Correctly typed `req` now has `params`.
     const { id } = req.params;
     const papers: PastPaper[] = await readJsonFile(papersFilePath);
@@ -135,7 +142,7 @@ export const deletePaper = async (req: express.Request, res: express.Response) =
 // @desc    Delete a study guide
 // @route   DELETE /api/admin/guides/:id
 // FIX: Use express.Request and express.Response for correct types.
-export const deleteGuide = async (req: express.Request, res: express.Response) => {
+export const deleteGuide = async (req: Request, res: Response) => {
     // FIX: Correctly typed `req` now has `params`.
     const { id } = req.params;
     const guides: StudyGuide[] = await readJsonFile(guidesFilePath);

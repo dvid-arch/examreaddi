@@ -2,6 +2,7 @@ import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import Card from '../components/Card.tsx';
 import { LeaderboardScore, ChallengeQuestion, PastPaper } from '../types.ts';
 import MarkdownRenderer from '../components/MarkdownRenderer.tsx';
+import QuestionRenderer from '../components/QuestionRenderer.tsx';
 import { useAuth } from '../contexts/AuthContext.tsx';
 import { API_BASE_URL } from '../config.ts';
 import apiService from '../services/apiService.ts';
@@ -259,12 +260,10 @@ const UtmeChallenge: React.FC = () => {
 
                 <div className="flex-1 bg-gray-50 p-4 overflow-y-auto">
                     <p className="font-semibold text-slate-700 mb-2">Question {currentQuestionIndex + 1}/{TOTAL_QUESTIONS} <span className="text-sm text-slate-500">({currentQuestion.subject})</span></p>
-                    <div className="text-lg text-slate-800 mb-4"><MarkdownRenderer content={currentQuestion.question} /></div>
-                    {currentQuestion.questionDiagram && (
-                        <div className="mb-6">
-                            <img src={currentQuestion.questionDiagram} alt="Question diagram" className="max-w-full h-auto mx-auto rounded-lg border bg-white" />
-                        </div>
-                    )}
+                    <QuestionRenderer 
+                        question={currentQuestion}
+                        className="text-lg text-slate-800 mb-4"
+                    />
                     <div className="space-y-3">
                          {Object.keys(currentQuestion.options).map((key) => {
                             const value = currentQuestion.options[key];
@@ -344,12 +343,10 @@ const UtmeChallenge: React.FC = () => {
                 </div>
                 <div className="flex-1 bg-gray-50 p-4 overflow-y-auto">
                     <p className="font-semibold text-slate-700 mb-2">Question {currentQuestionIndex + 1}/{TOTAL_QUESTIONS}</p>
-                    <div className="text-lg text-slate-800 mb-4"><MarkdownRenderer content={currentQuestion.question} /></div>
-                    {currentQuestion.questionDiagram && (
-                        <div className="mb-6">
-                            <img src={currentQuestion.questionDiagram} alt="Question diagram" className="max-w-full h-auto mx-auto rounded-lg border bg-white" />
-                        </div>
-                    )}
+                    <QuestionRenderer 
+                        question={currentQuestion}
+                        className="text-lg text-slate-800 mb-4"
+                    />
                     <div className="space-y-3">
                          {Object.keys(currentQuestion.options).map((key) => {
                              const value = currentQuestion.options[key];

@@ -1,6 +1,7 @@
 import React, { useState, useMemo, useEffect, useCallback } from 'react';
 import { useLocation, useNavigate, Link } from 'react-router-dom';
 import { ChallengeQuestion, QuizResult, PastPaper } from '../types.ts';
+import QuestionRenderer from '../components/QuestionRenderer.tsx';
 import MarkdownRenderer from '../components/MarkdownRenderer.tsx';
 import { useAuth } from '../contexts/AuthContext.tsx';
 import { usePwaInstall } from '../contexts/PwaContext.tsx';
@@ -420,12 +421,10 @@ const TakeExamination: React.FC = () => {
                                             <span className="text-sm text-slate-500"> of {totalQuestionsInSubject}</span>
                                         </p>
                                     </div>
-                                    <div className="text-lg text-slate-800 mb-4 min-h-[40px]"><MarkdownRenderer content={currentQuestion.question} /></div>
-                                    {currentQuestion.questionDiagram && (
-                                        <div className="mb-6">
-                                            <img src={currentQuestion.questionDiagram} alt="Question diagram" className="max-w-full h-auto mx-auto rounded-lg border bg-white shadow-sm" />
-                                        </div>
-                                    )}
+                                    <QuestionRenderer 
+                                        question={currentQuestion}
+                                        className="text-lg text-slate-800 mb-4 min-h-[40px]"
+                                    />
                                     <div className="space-y-4">
                                         {Object.keys(currentQuestion.options).map((key) => {
                                             const value = currentQuestion.options[key];
